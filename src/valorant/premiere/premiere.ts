@@ -29,7 +29,7 @@ interface IEvent { // Events are typically Games, Scrims and Tournaments of the 
     points_required_to_participate: number
 }
 
-class Premiere_Event {}
+class Premiere_Evente {}
 
 class VALORANT_Premiere {
     protected id?: string
