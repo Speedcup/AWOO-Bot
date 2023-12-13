@@ -1,0 +1,1 @@
+pm2 start "tsc && node dist/index.js" --name Personal --time --no-autorestart
