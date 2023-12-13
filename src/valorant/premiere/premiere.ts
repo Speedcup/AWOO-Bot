@@ -29,7 +29,9 @@ interface IEvent { // Events are typically Games, Scrims and Tournaments of the 
     points_required_to_participate: number
 }
 
-export default class VALORANT_Premiere {
+class Premiere_Event {}
+
+class VALORANT_Premiere {
     protected id?: string
     protected championship_event_id?: string
     protected championship_points_required?: number
