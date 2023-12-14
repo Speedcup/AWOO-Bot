@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+export { VALORANT_Premiere };
 /*
 TODO List
 * Fetch Premiere Data upon every startup and every 24hours (or some other logical time period)
@@ -18,7 +18,7 @@ interface IScheduled_Event {
     starts_at: number,
     ends_at: number
 }
-ss
+
 interface IEvent { // Events are typically Games, Scrims and Tournaments of the whole premiere season.
     id: string,
     type: string, // TODO - ENUM (LEAGUE, SCRIM, TOURNAMENT)

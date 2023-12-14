@@ -7,7 +7,7 @@ import {
     ButtonStyle, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ActionRowBuilder, Embed
 } from "discord.js";
 import {EMBED_COMMAND} from "../../../commands/shared";
-import VALORANT_Premiere from "../premiere";
+import {VALORANT_Premiere} from "../premiere";
 
 module.exports = {
     data: EMBED_COMMAND.addSubcommand(subcommand => subcommand
@@ -18,6 +18,7 @@ module.exports = {
         const events = await premiere.get_events();
         let embeds: EmbedBuilder[] = [];
 
+        /*
         if (events) {
             for (const event of events) {
                 embeds.push(
@@ -57,5 +58,6 @@ module.exports = {
                 })
             ]
         })
+        */
     },
 };
