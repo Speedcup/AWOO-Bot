@@ -18,7 +18,7 @@ interface IScheduled_Event {
     starts_at: number,
     ends_at: number
 }
-s
+ss
 interface IEvent { // Events are typically Games, Scrims and Tournaments of the whole premiere season.
     id: string,
     type: string, // TODO - ENUM (LEAGUE, SCRIM, TOURNAMENT)
