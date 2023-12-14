@@ -10,6 +10,10 @@ TODO List
 * The API saves every previous season as well, so we should only fetch the last data item to get the current ongoing season.
 */
 
+interface IMapSelection {
+    type: string,
+    maps: Array<{ name: string, id: string }>
+}
 interface IScheduled_Event {
     event: IEvent,
     event_id: string,
@@ -24,7 +28,7 @@ interface IEvent { // Events are typically Games, Scrims and Tournaments of the 
     starts_at: number, // Remove -1 hour (dateString)
     ends_at: number, // Remove -1 hour (dateString)
     // conference_schedules: string[] /** I would rather not implement this, as this contains every schedule for every region which we do not need. Just recalculate the start and end time to EU-West Timezone. GMT + 1**/
-    map_selection: object[],
+    map_selection: IMapSelection,
     points_required_to_participate: number
 }
 
@@ -43,7 +47,7 @@ class Premiere_ScheduledEvent implements IScheduled_Event {
     * TODO: Return Map Object (from valorant-api.com)
     */
     async get_map(): Promise<MapClass | undefined> {
-        return await this.event?.get_map()
+        return this.event?.get_map();
     }
 }
 
@@ -53,7 +57,7 @@ class Premiere_Event implements IEvent {
         public type: string,
         public starts_at: number,
         public ends_at: number,
-        public map_selection: object[],
+        public map_selection: IMapSelection,
         public points_required_to_participate: number
     ) {}
 
@@ -63,14 +67,8 @@ class Premiere_Event implements IEvent {
     */
     async get_map(): Promise<MapClass | undefined> {
         // We do not care about the type, only about the maps.
-        //@ts-ignore
-        if (this.map_selection["type"] === "PICKBAN") return;
-
-        //@ts-ignore
-        console.log(this.map_selection["maps"][0]["id"]);
-
-        //@ts-ignore
-        return await MapClass.fetchMap(this.map_selection["maps"][0]["id"]);
+        if (this.map_selection.type === "PICKBAN") return;
+        return await MapClass.fetchMap(this.map_selection.maps[0].id);
     }
 }
 
@@ -135,6 +133,8 @@ class VALORANT_Premiere {
         // console.log(this);
         // console.log(new Date(this.scheduled_events ? this.scheduled_events[0].starts_at : 0).toDateString())
         // console.log(this.scheduled_events?.length)
+
+        // console.log(this.events?.[this.events?.length - 1].map_selection.maps[0].name);
 
         return this;
     }

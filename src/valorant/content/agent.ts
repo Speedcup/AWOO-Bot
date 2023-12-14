@@ -1,6 +1,8 @@
 import axios from "axios";
 import { Cache } from "../../utils/globalcache";
 import logger from "../../logger";
+import {ComponentEmojiResolvable, Emoji, Guild, GuildEmoji} from "discord.js";
+import { discord_bot } from "../../index";
 
 export { AgentClass, AgentStructure, AgentCacheClass, agent_cache };
 
@@ -156,9 +158,14 @@ class AgentClass implements AgentStructure {
         return this.DisplayName
     }
 
-    // TODO!!!
-    get_emoji(): string {
-        return ""
+    get_emoji(): GuildEmoji {
+        //const  devGuild: Guild = await discord_bot.guilds.cache.get("1001550913556729996");
+        const emoji_cache = discord_bot.Client.emojis.cache;
+        const emojiMatch: GuildEmoji = emoji_cache.find(
+            (emoji: GuildEmoji) => emoji.name?.toLowerCase().includes(this.DisplayName.toLowerCase().replace("/", ""))
+        ) ?? emoji_cache.get("1025900281550090304")
+
+        return emojiMatch;
     }
     get_ability_keybind(ability: AgentAbility): string {
         switch (ability.Slot) {

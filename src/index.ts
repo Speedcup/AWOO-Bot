@@ -7,12 +7,15 @@ const { Client, Events, ActivityType, Routes, GatewayIntentBits } = require('dis
 import logger from './logger';
 
 import dotenv from 'dotenv';
-import {Collection, Guild} from "discord.js";
+import { Pool } from 'pg';
+import { Collection, Guild } from "discord.js";
 import { MapClass, map_cache } from "./valorant/content/map";
+
+export { discord_bot };
 
 dotenv.config();
 
-export default class DiscordBot {
+class DiscordBot {
     public readonly Client = new Client({
         intents: [
             GatewayIntentBits.Guilds,
@@ -69,13 +72,6 @@ export default class DiscordBot {
                 status: 'online',
             });
 
-            (async () => {
-                const devGuild: Guild = await this.Client.guilds.cache.get("1001550913556729996");
-                devGuild.emojis.cache.forEach(emoji => {
-                    console.log(`Emoji Name: ${emoji.name}, ID: ${emoji.id}`)
-                });
-            })()
-
             logger.info(`Ready! Logged in as ${client.user.tag}`);
         }))
 
@@ -98,31 +94,52 @@ export default class DiscordBot {
         });
     }
 
+    private async loadCommand(commandPath: string, file: string) {
+        const filePath = path.join(commandPath, file);
+        const command = require(filePath);
+        // Set a new item in the Collection with the key as the command name and the value as the exported module
+        if ('data' in command && 'execute' in command) {
+            this.Client.commands.set(command.data.name, command);
+            logger.info(`Loaded Command => ${command.data.name}.`);
+        } else {
+            logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+        }
+    }
+
     private async loadCommands(dir: string = "commands"): Promise<void> {
         logger.debug("Loading Commands ...");
 
-        // Load normal commands first.
-        try {
-            const foldersPath = path.join(__dirname, "commands");
-            const commandFolders = fs.readdirSync(foldersPath);
+        /* Load normal commands first */
+        const foldersPath = path.join(__dirname, "commands");
+        const commandFolders = fs.readdirSync(foldersPath);
 
+        if (fs.existsSync(commandFolders)) {
             for (const folder of commandFolders) {
-                const commandsPath = path.join(foldersPath, folder);
-                const commandFiles = fs.readdirSync(commandsPath).filter((file: string) => file.endsWith('.js'));
-                for (const file of commandFiles) {
-                    const filePath = path.join(commandsPath, file);
-                    const command = require(filePath);
-                    // Set a new item in the Collection with the key as the command name and the value as the exported module
-                    if ('data' in command && 'execute' in command) {
-                        this.Client.commands.set(command.data.name, command);
-                        logger.info(`Command ${command.data.name} has been loaded.`);
-                    } else {
-                        logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+                try {
+                    const commandsPath = path.join(foldersPath, folder);
+                    const commandFiles = fs.readdirSync(commandsPath).filter((file: string) => file.endsWith('.js'));
+                    for (const file of commandFiles) {
+                        await this.loadCommand(commandsPath, file);
                     }
+                } catch (e) {
+                    logger.debug("No commands were found.");
                 }
             }
-        } catch (e) {
-            logger.debug("No commands were found.");
+        }
+
+        // Load valorant commands.
+        const valorantPath = path.join(__dirname, "valorant");
+        const moduleFolders = fs.readdirSync(valorantPath);
+        for (const moduleFolder of moduleFolders) {
+            const commandPath = path.join(valorantPath, moduleFolder + "/commands");
+
+            if (fs.existsSync(commandPath)) {
+                const commandFiles = fs.readdirSync(commandPath);
+                console.log(commandFiles);
+                for (const command of commandFiles) {
+                    await this.loadCommand(commandPath, command);
+                }
+            }
         }
 
         logger.info("Loaded Commands!");
@@ -163,12 +180,28 @@ export default class DiscordBot {
         })
     }
 
+    private async initialiseDatabase(): Promise<void> {
+        logger.debug("Initializing Database ...");
+
+        this.Client.DB = new Pool({
+            user: process.env.DATABASE_USER,
+            host: process.env.DATABASE_HOST,
+            database: process.env.DATABASE_DB,
+            password: process.env.DATABASE_PASSWORD,
+            port: 5432, // Standard-PostgreSQL-Port
+            max: 20,    // Maximale Anzahl der Verbindungen im Pool
+            idleTimeoutMillis: 30000, // Timeout für inaktive Verbindungen
+        });
+
+        logger.debug("Database initialized.")
+    }
+
     private async preStart(): Promise<void> {
         // Initialize caches before we are loading commands and such, because some commands rely on our caches.
         await this.initialize_caches();
 
         // Initialize the database at second, because some commands rely on our database.
-        //await this.initialiseDatabase();
+        await this.initialiseDatabase();
 
         // Initialize our events after all has loaded. Events could rely on db and cache entries as well./
         await this.loadEvents();
@@ -184,7 +217,8 @@ export default class DiscordBot {
     }
 }
 
+const discord_bot = new DiscordBot();
+
 (async () => {
-    const discord_bot = new DiscordBot();
     await discord_bot.start();
 })()
