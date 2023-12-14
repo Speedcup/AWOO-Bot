@@ -28,7 +28,7 @@ interface IEvent { // Events are typically Games, Scrims and Tournaments of the 
     map_selection: Premiere_Map_Selection[],
     points_required_to_participate: number
 }
-
+d
 class Premiere_Event {}
 
 class VALORANT_Premiere {
