@@ -66,6 +66,9 @@ const GenerateEventEmbed = async (event: Premiere_ScheduledEvent): Promise<Embed
         )
         .setThumbnail("https://cdn.henrikdev.xyz/valorant/v1/premier/team-icon/f6cdfd06-4a98-792a-3a37-a88805ba99ce?primary=0d0c0d&secondary=06347f&tertiary=d6cec0")
         .setImage(eventMap ? eventMap.ListViewIcon : "")
+        .setFooter({
+            text: event.event_id
+        })
 
     return event_embed;
 }

@@ -4,19 +4,31 @@ import {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    CommandInteraction, Embed, EmbedBuilder
+    CommandInteraction, Embed, EmbedBuilder, StringSelectMenuBuilder, AnyComponentBuilder
 } from 'discord.js';
 
 class PageSelection {
-    readonly pages: EmbedBuilder[];
+    private readonly pages: EmbedBuilder[];
+    private readonly customComponents: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[];
+    private readonly time: number;
     private currentPage: number;
     private currentInteraction: CommandInteraction | null;
 
     public show_previous_button: boolean;
     public show_next_button: boolean;
 
-    constructor(pages: EmbedBuilder[], showPreviousButton: boolean = true, showNextButton: boolean = true) {
+    constructor(
+        pages: EmbedBuilder[],
+        customComponents: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[] = [],
+        time: number = 30000,
+        showPreviousButton: boolean = true,
+        showNextButton: boolean = true)
+    {
         this.pages = pages;
+
+        this.customComponents = customComponents;
+        this.time = time;
+
         this.currentPage = 0;
         this.currentInteraction = null;
 
@@ -24,7 +36,7 @@ class PageSelection {
         this.show_next_button = showNextButton;
     }
 
-    async create_components() {
+    async create_components(): Promise<ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[]> {
         const buttons = new ActionRowBuilder<ButtonBuilder>();
 
         // Check if we should show the previous button.
@@ -32,7 +44,7 @@ class PageSelection {
             buttons.addComponents(
                 new ButtonBuilder()
                     .setCustomId('previous_page')
-                    .setLabel('⬅️')
+                    .setEmoji('⬅️')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(this.currentPage <= 0)
             )
@@ -50,13 +62,13 @@ class PageSelection {
             buttons.addComponents(
                 new ButtonBuilder()
                     .setCustomId('next_page')
-                    .setLabel('➡️')
+                    .setEmoji('➡️')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled((this.currentPage + 1) >= this.pages.length)
             )
         }
 
-        return buttons;
+        return [...this.customComponents, buttons];
     }
 
     async send(interaction: CommandInteraction) {
@@ -67,13 +79,15 @@ class PageSelection {
         const currentPage = this.pages[this.currentPage];
         const buttons = await this.create_components();
 
-        const response = await interaction.reply({ embeds: [currentPage], components: [buttons] });
+        const response = await interaction.reply(
+            { embeds: [currentPage], components: buttons }
+        );
         this.currentInteraction = interaction;
 
         const filter = (interaction: MessageComponentInteraction) =>
             interaction.customId === 'previous_page' || interaction.customId === 'next_page';
 
-        const collector = response.createMessageComponentCollector({ filter, time: 30000 });
+        const collector = response.createMessageComponentCollector({ filter, time: this.time });
 
         collector.on('collect', async (interaction: ButtonInteraction) => {
             await interaction.deferUpdate();
@@ -109,7 +123,7 @@ class PageSelection {
             const currentPage = this.pages[this.currentPage];
             const components = await this.create_components();
 
-            await this.currentInteraction.editReply({ embeds: [currentPage], components: [components] });
+            await this.currentInteraction.editReply({ embeds: [currentPage], components: components });
         }
     }
 }
