@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { AgentClass, MapClass, agent_cache, map_cache } from "../content";
-export { VALORANT_Premiere };
+import {discord_bot} from "../../index";
+export { VALORANT_Premiere, Premiere_Event, Premiere_ScheduledEvent };
 
 /*
 TODO List
@@ -48,6 +49,15 @@ class Premiere_ScheduledEvent implements IScheduled_Event {
     */
     async get_map(): Promise<MapClass | undefined> {
         return this.event?.get_map();
+    }
+
+    async get_member_participation() {
+        const database = await discord_bot.Client.DB.connect();
+
+        const members = await database.query(`SELECT * FROM members`);
+        const participation = await database.query(`SELECT * FROM events WHERE event_id = '${this.event_id}'`);
+
+        database.release();
     }
 }
 
@@ -146,7 +156,3 @@ class VALORANT_Premiere {
         return this.scheduled_events;
     }
 }
-
-(async() => {
-    const data = new VALORANT_Premiere().fetch_data();
-})();
