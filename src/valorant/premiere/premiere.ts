@@ -1,5 +1,7 @@
 import axios from 'axios';
+import { AgentClass, MapClass, agent_cache, map_cache } from "../content";
 export { VALORANT_Premiere };
+
 /*
 TODO List
 * Fetch Premiere Data upon every startup and every 24hours (or some other logical time period)
@@ -8,11 +10,8 @@ TODO List
 * The API saves every previous season as well, so we should only fetch the last data item to get the current ongoing season.
 */
 
-interface Premiere_Map_Selection {
-    type: string, // TODO - ENUM (RANDOM?)
-    maps: string[]
-}
 interface IScheduled_Event {
+    event: IEvent,
     event_id: string,
     conference: string,
     starts_at: number,
@@ -25,11 +24,55 @@ interface IEvent { // Events are typically Games, Scrims and Tournaments of the 
     starts_at: number, // Remove -1 hour (dateString)
     ends_at: number, // Remove -1 hour (dateString)
     // conference_schedules: string[] /** I would rather not implement this, as this contains every schedule for every region which we do not need. Just recalculate the start and end time to EU-West Timezone. GMT + 1**/
-    map_selection: Premiere_Map_Selection[],
+    map_selection: object[],
     points_required_to_participate: number
 }
 
-class Premiere_Event {}
+// @ts-ignore
+class Premiere_ScheduledEvent implements IScheduled_Event {
+    constructor(
+        public event: Premiere_Event | undefined,
+        public event_id: string,
+        public conference: string,
+        public starts_at: number,
+        public ends_at: number
+    ) {}
+
+    /* Returns the map the event is playing on.
+    * Returns multiple maps for tournament type.
+    * TODO: Return Map Object (from valorant-api.com)
+    */
+    async get_map(): Promise<MapClass | undefined> {
+        return await this.event?.get_map()
+    }
+}
+
+class Premiere_Event implements IEvent {
+    constructor(
+        public id: string,
+        public type: string,
+        public starts_at: number,
+        public ends_at: number,
+        public map_selection: object[],
+        public points_required_to_participate: number
+    ) {}
+
+    /* Returns the map the event is playing on.
+    * Returns multiple maps for tournament type.
+    * TODO: Return Map Object (from valorant-api.com)
+    */
+    async get_map(): Promise<MapClass | undefined> {
+        // We do not care about the type, only about the maps.
+        //@ts-ignore
+        if (this.map_selection["type"] === "PICKBAN") return;
+
+        //@ts-ignore
+        console.log(this.map_selection["maps"][0]["id"]);
+
+        //@ts-ignore
+        return await MapClass.fetchMap(this.map_selection["maps"][0]["id"]);
+    }
+}
 
 class VALORANT_Premiere {
     protected id?: string
@@ -39,8 +82,8 @@ class VALORANT_Premiere {
     protected ends_at?: number
     protected enrollment_starts_at?: number
     protected enrollment_ends_at?: number
-    protected events?: IEvent[]
-    protected scheduled_events?: IScheduled_Event[]
+    protected events?: Premiere_Event[]
+    protected scheduled_events?: Premiere_ScheduledEvent[]
 
     constructor(
         private region = "eu"
@@ -65,51 +108,39 @@ class VALORANT_Premiere {
         this.ends_at = Date.parse(data.ends_at);
         this.enrollment_starts_at = Date.parse(data.enrollment_starts_at);
         this.enrollment_ends_at = Date.parse(data.enrollment_ends_at);
-        this.events = data.events.map((event: any) => {
-            return {
-                id: event.id,
-                type: event.type,
-                starts_at: event.starts_at,
-                ends_at: event.ends_at,
-                map_selection: event.map_selection,
-                points_required_to_participate: event.points_required_to_participate
-            } as IEvent
-        });
-        this.scheduled_events = data.scheduled_events.map((event: any) => {
-            // We only care about the region we are playing in.
-            if (event.conference !== "EU_CENTRAL_EAST") return;
-
-            return {
-                event_id: event.event_id,
-                conference: event.conference,
-                starts_at: Date.parse(event.starts_at),
-                ends_at: Date.parse(event.ends_at)
-            } as IScheduled_Event
-        });
+        this.events = data.events.map((event: any) => new Premiere_Event(
+            event.id,
+            event.type,
+            Date.parse(event.starts_at),
+            Date.parse(event.ends_at),
+            event.map_selection,
+            event.points_required_to_participate
+        ));
         this.scheduled_events = data.scheduled_events
             /* Check whether
             * The Event plays in our region.
             * It is an upcoming event that has not yet been played.
             */
             .filter(((event: any) => event.conference === "EU_CENTRAL_EAST" && (Date.parse(event.starts_at)) > (Date.now())))
-            .map((event: any) => {
-                return {
-                    event_id: event.event_id,
-                    conference: event.conference,
-                    starts_at: Date.parse(event.starts_at),
-                    ends_at: Date.parse(event.ends_at)
-                } as IScheduled_Event
-        });
+            .map((scheduledEvent: any) => new Premiere_ScheduledEvent(
+                // Save the whole event class so we have a reference
+                this.events ? this.events.find(((event: any) => event.id === scheduledEvent.event_id)) : undefined,
+                scheduledEvent.event_id,
+                scheduledEvent.conference,
+                Date.parse(scheduledEvent.starts_at),
+                Date.parse(scheduledEvent.ends_at)
+            )
+        );
 
-        console.log(this);
-        console.log(new Date(this.scheduled_events ? this.scheduled_events[0].starts_at : 0).toDateString())
-        console.log(this.scheduled_events?.length)
+        // console.log(this);
+        // console.log(new Date(this.scheduled_events ? this.scheduled_events[0].starts_at : 0).toDateString())
+        // console.log(this.scheduled_events?.length)
 
         return this;
     }
 
     /* Returns every scheduled event. */
-    async get_events(): Promise<IScheduled_Event[] | undefined> {
+    async get_events(): Promise<Premiere_ScheduledEvent[] | undefined> {
         // let events: IScheduled_Event[] = [];
 
         return this.scheduled_events;

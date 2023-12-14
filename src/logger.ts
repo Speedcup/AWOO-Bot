@@ -5,5 +5,7 @@ const stream = pretty({
     ignore: 'pid,hostname', // --ignore,
     translateTime: "yyyy-mm-dd HH:MM:ss"
 })
+
 const logger = pino({ level: 'debug' }, stream)
-module.exports = logger;
+export default logger;
+// module.exports = logger;

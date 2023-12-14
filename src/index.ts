@@ -1,12 +1,14 @@
+import {agent_cache, AgentClass} from "./valorant/content/agent";
+
 const fs = require('node:fs');
 const path = require('node:path');
 
 const { Client, Events, ActivityType, Routes, GatewayIntentBits } = require('discord.js');
-const logger = require('./logger');
+import logger from './logger';
 
-import {Cache} from "./utils/globalcache";
-import { Collection } from "discord.js";
 import dotenv from 'dotenv';
+import {Collection, Guild} from "discord.js";
+import { MapClass, map_cache } from "./valorant/content/map";
 
 dotenv.config();
 
@@ -67,6 +69,13 @@ export default class DiscordBot {
                 status: 'online',
             });
 
+            (async () => {
+                const devGuild: Guild = await this.Client.guilds.cache.get("1001550913556729996");
+                devGuild.emojis.cache.forEach(emoji => {
+                    console.log(`Emoji Name: ${emoji.name}, ID: ${emoji.id}`)
+                });
+            })()
+
             logger.info(`Ready! Logged in as ${client.user.tag}`);
         }))
 
@@ -89,11 +98,12 @@ export default class DiscordBot {
         });
     }
 
-    private loadCommands() {
+    private async loadCommands(dir: string = "commands"): Promise<void> {
         logger.debug("Loading Commands ...");
 
+        // Load normal commands first.
         try {
-            const foldersPath = path.join(__dirname, 'commands');
+            const foldersPath = path.join(__dirname, "commands");
             const commandFolders = fs.readdirSync(foldersPath);
 
             for (const folder of commandFolders) {
@@ -118,7 +128,7 @@ export default class DiscordBot {
         logger.info("Loaded Commands!");
     }
 
-    private loadEvents(): void {
+    private async loadEvents(): Promise<void> {
         logger.debug("Loading Events ...");
 
         const foldersPath = path.join(__dirname, 'events');
@@ -142,9 +152,29 @@ export default class DiscordBot {
 
         logger.info("Loaded events!");
     }
-    private async preStart() {
-        this.loadEvents();
-        this.loadCommands();
+
+    private async initialize_caches(): Promise<void> {
+        await AgentClass.fetchAgents().then((agents) => {
+            agent_cache.update(agents);
+        })
+
+        await MapClass.fetchMaps().then((maps) => {
+            map_cache.update(maps);
+        })
+    }
+
+    private async preStart(): Promise<void> {
+        // Initialize caches before we are loading commands and such, because some commands rely on our caches.
+        await this.initialize_caches();
+
+        // Initialize the database at second, because some commands rely on our database.
+        //await this.initialiseDatabase();
+
+        // Initialize our events after all has loaded. Events could rely on db and cache entries as well./
+        await this.loadEvents();
+
+        // Initialize our commands at last.
+        await this.loadCommands();
     }
 
     public async start() {

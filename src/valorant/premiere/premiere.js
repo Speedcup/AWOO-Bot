@@ -36,7 +36,65 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VALORANT_Premiere = void 0;
 var axios_1 = require("axios");
+var content_1 = require("../content");
+// @ts-ignore
+var Premiere_ScheduledEvent = /** @class */ (function () {
+    function Premiere_ScheduledEvent(event, event_id, conference, starts_at, ends_at) {
+        this.event = event;
+        this.event_id = event_id;
+        this.conference = conference;
+        this.starts_at = starts_at;
+        this.ends_at = ends_at;
+    }
+    /* Returns the map the event is playing on.
+    * Returns multiple maps for tournament type.
+    * TODO: Return Map Object (from valorant-api.com)
+    */
+    Premiere_ScheduledEvent.prototype.get_map = function () {
+        var _a;
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, ((_a = this.event) === null || _a === void 0 ? void 0 : _a.get_map())];
+                    case 1: return [2 /*return*/, _b.sent()];
+                }
+            });
+        });
+    };
+    return Premiere_ScheduledEvent;
+}());
+var Premiere_Event = /** @class */ (function () {
+    function Premiere_Event(id, type, starts_at, ends_at, map_selection, points_required_to_participate) {
+        this.id = id;
+        this.type = type;
+        this.starts_at = starts_at;
+        this.ends_at = ends_at;
+        this.map_selection = map_selection;
+        this.points_required_to_participate = points_required_to_participate;
+    }
+    /* Returns the map the event is playing on.
+    * Returns multiple maps for tournament type.
+    * TODO: Return Map Object (from valorant-api.com)
+    */
+    Premiere_Event.prototype.get_map = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // We do not care about the type, only about the maps.
+                        if (this.map_selection["type"] === "PICKBAN")
+                            return [2 /*return*/];
+                        console.log(this.map_selection["maps"][0]["id"]);
+                        return [4 /*yield*/, content_1.MapClass.fetchMap(this.map_selection["maps"][0]["id"])];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    return Premiere_Event;
+}());
 var VALORANT_Premiere = /** @class */ (function () {
     function VALORANT_Premiere(region) {
         if (region === void 0) { region = "eu"; }
@@ -48,12 +106,13 @@ var VALORANT_Premiere = /** @class */ (function () {
     VALORANT_Premiere.prototype.fetch_data = function () {
         var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var response, data;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var response, data, _b, _c;
+            var _this = this;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0: return [4 /*yield*/, axios_1.default.get("https://api.henrikdev.xyz/valorant/v1/premier/seasons/".concat(this.region))];
                     case 1:
-                        response = _b.sent();
+                        response = _d.sent();
                         if (response.status !== 200) {
                             throw new Error("Could not fetch the premiere data.");
                         }
@@ -65,45 +124,27 @@ var VALORANT_Premiere = /** @class */ (function () {
                         this.ends_at = Date.parse(data.ends_at);
                         this.enrollment_starts_at = Date.parse(data.enrollment_starts_at);
                         this.enrollment_ends_at = Date.parse(data.enrollment_ends_at);
-                        this.events = data.events.map(function (event) {
-                            return {
-                                id: event.id,
-                                type: event.type,
-                                starts_at: event.starts_at,
-                                ends_at: event.ends_at,
-                                map_selection: event.map_selection,
-                                points_required_to_participate: event.points_required_to_participate
-                            };
-                        });
-                        this.scheduled_events = data.scheduled_events.map(function (event) {
-                            // We only care about the region we are playing in.
-                            if (event.conference !== "EU_CENTRAL_EAST")
-                                return;
-                            return {
-                                event_id: event.event_id,
-                                conference: event.conference,
-                                starts_at: Date.parse(event.starts_at),
-                                ends_at: Date.parse(event.ends_at)
-                            };
-                        });
+                        this.events = data.events.map(function (event) { return new Premiere_Event(event.id, event.type, event.starts_at, event.ends_at, event.map_selection, event.points_required_to_participate); });
                         this.scheduled_events = data.scheduled_events
                             /* Check whether
                             * The Event plays in our region.
                             * It is an upcoming event that has not yet been played.
                             */
                             .filter((function (event) { return event.conference === "EU_CENTRAL_EAST" && (Date.parse(event.starts_at)) > (Date.now()); }))
-                            .map(function (event) {
-                            return {
-                                event_id: event.event_id,
-                                conference: event.conference,
-                                starts_at: Date.parse(event.starts_at),
-                                ends_at: Date.parse(event.ends_at)
-                            };
-                        });
-                        console.log(this);
-                        console.log(new Date(this.scheduled_events ? this.scheduled_events[0].starts_at : 0).toDateString());
-                        console.log((_a = this.scheduled_events) === null || _a === void 0 ? void 0 : _a.length);
-                        return [2 /*return*/];
+                            .map(function (scheduledEvent) { return new Premiere_ScheduledEvent(
+                        // Save the whole event class so we have a reference
+                        _this.events ? _this.events.find((function (event) { return event.id === scheduledEvent.event_id; })) : undefined, scheduledEvent.event_id, scheduledEvent.conference, scheduledEvent.starts_at, scheduledEvent.ends_at); });
+                        // console.log(this);
+                        // console.log(new Date(this.scheduled_events ? this.scheduled_events[0].starts_at : 0).toDateString())
+                        // console.log(this.scheduled_events?.length)
+                        _c = (_b = console).log;
+                        return [4 /*yield*/, ((_a = this.scheduled_events) === null || _a === void 0 ? void 0 : _a[1].get_map())];
+                    case 2:
+                        // console.log(this);
+                        // console.log(new Date(this.scheduled_events ? this.scheduled_events[0].starts_at : 0).toDateString())
+                        // console.log(this.scheduled_events?.length)
+                        _c.apply(_b, [_d.sent()]);
+                        return [2 /*return*/, this];
                 }
             });
         });
@@ -119,7 +160,7 @@ var VALORANT_Premiere = /** @class */ (function () {
     };
     return VALORANT_Premiere;
 }());
-exports.default = VALORANT_Premiere;
+exports.VALORANT_Premiere = VALORANT_Premiere;
 (function () { return __awaiter(void 0, void 0, void 0, function () {
     var data;
     return __generator(this, function (_a) {
