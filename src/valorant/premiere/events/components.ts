@@ -1,8 +1,4 @@
-import {
-    ActionRowBuilder,
-    Events, ModalBuilder, TextInputBuilder, TextInputStyle
-} from 'discord.js';
-import {channel_cache} from "../../utils/globalcache";
+import { Events } from 'discord.js';
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -10,6 +6,8 @@ module.exports = {
         if (
             interaction.isStringSelectMenu() || interaction.isButton() &&
             (["premiere_accept", "premiere_deny", "premiere_reminder", "premiere_reset", "premiere_agent_select"].includes(interaction.customId))
-        ) {}
+        ) {
+
+        }
     },
 };

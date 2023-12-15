@@ -29,7 +29,7 @@ module.exports = {
         const emoji_trash = interaction.client.emojis.cache.get("1184888993259724810");
         const emoji_reminder = interaction.client.emojis.cache.get("1184892183900332072");
 
-        let embeds: EmbedBuilder[] | undefined = await GenerateEventEmbeds(2);
+        let embeds: EmbedBuilder[] | undefined = await GenerateEventEmbeds(3);
         if (!embeds) return;
 
         let select_options: StringSelectMenuOptionBuilder[] = [];
@@ -85,45 +85,8 @@ module.exports = {
                 components: [agent_select]
             }),
             ],
-            0
+            0 // Remain infinite
         );
         await pageSelection.send(interaction);
-        /*
-        await interaction.reply({
-            embeds: [...embeds],
-            components: [
-                new ActionRowBuilder<ButtonBuilder>({
-                    components: [
-                        new ButtonBuilder()
-                            .setCustomId("premiere_accept")
-                            .setEmoji(emoji_correct ? emoji_correct.id : "✅")
-                            .setStyle(ButtonStyle.Primary),
-
-                        new ButtonBuilder()
-                            .setCustomId("premiere_deny")
-                            .setEmoji(emoji_wrong ? emoji_wrong.id : "❌")
-                            .setStyle(ButtonStyle.Secondary),
-
-                        new ButtonBuilder()
-                            .setCustomId("premiere_reminder")
-                            .setLabel("Erinnern")
-                            .setEmoji(emoji_reminder ? emoji_reminder.id : "⏰")
-                            .setStyle(ButtonStyle.Secondary)
-                            .setDisabled(true),
-
-                        new ButtonBuilder()
-                            .setCustomId("premiere_reset")
-                            .setLabel("Zurücksetzen")
-                            .setEmoji(emoji_trash ? emoji_trash.id : "♻")
-                            .setStyle(ButtonStyle.Secondary)
-                            .setDisabled(true),
-                    ]
-                }),
-                new ActionRowBuilder<StringSelectMenuBuilder>({
-                    components: [agent_select]
-                }),
-            ]
-        })
-        */
     },
 };

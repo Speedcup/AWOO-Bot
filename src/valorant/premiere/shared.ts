@@ -58,7 +58,7 @@ const GenerateEventEmbed = async (event: Premiere_ScheduledEvent): Promise<Embed
 
     const eventMap = await event.get_map();
     let event_embed = new EmbedBuilder()
-        .setTitle(`Premiere ➞ ${eventMap?.DisplayName}`)
+        .setTitle(`Premiere ➞ ${event.event?.type ?? "?"}`)
         .setColor(0x3498DB)
         .setDescription(
             `Premiere auf **${eventMap?.DisplayName}** ${time(Math.round(event.starts_at / 1000), TimestampStyles.RelativeTime)}\n\n`

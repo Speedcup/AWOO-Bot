@@ -77,7 +77,9 @@ class Premiere_Event implements IEvent {
     */
     async get_map(): Promise<MapClass | undefined> {
         // We do not care about the type, only about the maps.
-        if (this.map_selection.type === "PICKBAN") return;
+        if (this.map_selection.type === "PICKBAN")
+            return await MapClass.fetchMap("ee613ee9-28b7-4beb-9666-08db13bb2244"); // Use The Range for PickBans
+
         return await MapClass.fetchMap(this.map_selection.maps[0].id);
     }
 }

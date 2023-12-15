@@ -4,15 +4,25 @@ import {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    CommandInteraction, Embed, EmbedBuilder, StringSelectMenuBuilder, AnyComponentBuilder
+    CommandInteraction,
+    Embed,
+    EmbedBuilder,
+    StringSelectMenuBuilder,
+    AnyComponentBuilder,
+    StringSelectMenuInteraction,
+    Message, Component, ActionRow, ButtonComponent, StringSelectMenuComponent
 } from 'discord.js';
+import {discord_bot} from "../index";
+import { v4 as uuidv4 } from 'uuid';
+import {type} from "node:os";
 
 class PageSelection {
-    private readonly pages: EmbedBuilder[];
+    private uuid: string;
+    private readonly pages: EmbedBuilder[] | Embed[];
     private readonly customComponents: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[];
     private readonly time: number;
     private currentPage: number;
-    private currentInteraction: CommandInteraction | null;
+    private currentInteraction: any;
 
     public show_previous_button: boolean;
     public show_next_button: boolean;
@@ -24,6 +34,7 @@ class PageSelection {
         showPreviousButton: boolean = true,
         showNextButton: boolean = true)
     {
+        this.uuid = uuidv4();
         this.pages = pages;
 
         this.customComponents = customComponents;
@@ -36,6 +47,57 @@ class PageSelection {
         this.show_next_button = showNextButton;
     }
 
+    static async from_message(uuid: string, interaction: ButtonInteraction): Promise<PageSelection> {
+        // Create new actionRows from scratch.
+        const message: Message = interaction.message;
+
+        /** Find a way to calculate the current page based of embed ids */
+
+        // for (let i = 0; i >= message.embeds.length; i++) {
+        //     if (message.embeds[i].toJSON() === interaction.message.embeds[0].toJSON()) {}
+        // }
+
+        const embeds: EmbedBuilder[] = [];
+        for (const embed of message.embeds) {
+            embeds.push(
+                new EmbedBuilder({
+                    ...embed.data
+                })
+            )
+        }
+
+        const action_rows: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[] = [];
+        for (const action_row of message.components.slice(0, -1)) {
+            const builder = new ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>();
+
+            action_row.components.forEach((component: any) => {
+                if (component instanceof ButtonComponent) {
+                    builder.addComponents(
+                        new ButtonBuilder({
+                            ...component.data
+                        })
+                    );
+                }
+                else if (component instanceof StringSelectMenuComponent)
+                {
+                    builder.addComponents(
+                        new StringSelectMenuBuilder({
+                            ...component.data
+                        })
+                    );
+                }
+            });
+
+            action_rows.push(builder);
+        }
+
+        let pageSelection = new this(embeds, action_rows);
+        pageSelection.uuid = uuid;
+        pageSelection.currentInteraction = interaction
+
+        return pageSelection;
+    }
+
     async create_components(): Promise<ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[]> {
         const buttons = new ActionRowBuilder<ButtonBuilder>();
 
@@ -43,7 +105,7 @@ class PageSelection {
         if (this.show_previous_button) {
             buttons.addComponents(
                 new ButtonBuilder()
-                    .setCustomId('previous_page')
+                    .setCustomId(`${this.uuid}|previous_page`)
                     .setEmoji('⬅️')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(this.currentPage <= 0)
@@ -52,7 +114,7 @@ class PageSelection {
 
         buttons.addComponents(
             new ButtonBuilder()
-                .setCustomId('current_page')
+                .setCustomId(`${this.uuid}|current_page`)
                 .setLabel(`Page ${this.currentPage + 1} / ${this.pages.length}`)
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(true)
@@ -61,7 +123,7 @@ class PageSelection {
         if (this.show_next_button) {
             buttons.addComponents(
                 new ButtonBuilder()
-                    .setCustomId('next_page')
+                    .setCustomId(`${this.uuid}|next_page`)
                     .setEmoji('➡️')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled((this.currentPage + 1) >= this.pages.length)
@@ -83,27 +145,6 @@ class PageSelection {
             { embeds: [currentPage], components: buttons }
         );
         this.currentInteraction = interaction;
-
-        const filter = (interaction: MessageComponentInteraction) =>
-            interaction.customId === 'previous_page' || interaction.customId === 'next_page';
-
-        const collector = response.createMessageComponentCollector({ filter, time: this.time });
-
-        collector.on('collect', async (interaction: ButtonInteraction) => {
-            await interaction.deferUpdate();
-            if (interaction.customId === 'previous_page') {
-                this.previousPage();
-            } else if (interaction.customId === 'next_page') {
-                this.nextPage();
-            }
-            await this.updateEmbed();
-        });
-
-        collector.on('end', () => {
-            if (this.currentInteraction) {
-                this.currentInteraction.editReply({ components: [] }).catch(console.error);
-            }
-        });
     }
 
     private nextPage() {
@@ -123,9 +164,37 @@ class PageSelection {
             const currentPage = this.pages[this.currentPage];
             const components = await this.create_components();
 
-            await this.currentInteraction.editReply({ embeds: [currentPage], components: components });
+            await this.currentInteraction.message.edit({ embeds: [currentPage], components: components });
         }
     }
+
+    async on_button(interaction: ButtonInteraction) {
+        if (!interaction.isButton()) return;
+
+        await interaction.deferUpdate();
+        switch (interaction.customId.split("|")[1]) {
+            case "previous_page":
+                this.previousPage();
+                break;
+            case "next_page":
+                this.nextPage();
+                break;
+            default:
+                break;
+        }
+
+        await this.updateEmbed();
+    }
 }
+
+discord_bot.Client.on('interactionCreate', async (interaction: ButtonInteraction) => {
+    if (interaction.customId && interaction.customId.includes("|")) {
+        const pageSelection = await PageSelection.from_message(interaction.customId.split("|")[0], interaction)
+        await pageSelection.on_button(interaction);
+    }
+});
+
+/* I WAS SOOO GODDAMN STUIPID!!! */
+// discord_bot.Client.once('ready', async (client) => {});
 
 export default PageSelection;
