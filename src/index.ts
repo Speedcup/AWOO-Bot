@@ -1,4 +1,4 @@
-import {agent_cache, AgentClass} from "./valorant/content/agent";
+import {agent_cache, AgentClass} from "./valorant/content";
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -100,74 +100,67 @@ class DiscordBot {
         // Set a new item in the Collection with the key as the command name and the value as the exported module
         if ('data' in command && 'execute' in command) {
             this.Client.commands.set(command.data.name, command);
-            logger.info(`Loaded Command => ${command.data.name}.`);
+            logger.info(`Loaded Command => ${file}/${command.data.name}.`);
         } else {
             logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
         }
     }
 
-    private async loadCommands(dir: string = "commands"): Promise<void> {
-        logger.debug("Loading Commands ...");
+    private async loadCommands(dir: string = "discord"): Promise<void> {
+        // logger.debug("Loading Commands ...");
 
-        /* Load normal commands first */
-        const foldersPath = path.join(__dirname, "commands");
-        const commandFolders = fs.readdirSync(foldersPath);
-
-        if (fs.existsSync(commandFolders)) {
-            for (const folder of commandFolders) {
-                try {
-                    const commandsPath = path.join(foldersPath, folder);
-                    const commandFiles = fs.readdirSync(commandsPath).filter((file: string) => file.endsWith('.js'));
-                    for (const file of commandFiles) {
-                        await this.loadCommand(commandsPath, file);
-                    }
-                } catch (e) {
-                    logger.debug("No commands were found.");
-                }
-            }
-        }
-
-        // Load valorant commands.
-        const valorantPath = path.join(__dirname, "valorant");
-        const moduleFolders = fs.readdirSync(valorantPath);
+        const modulePath = path.join(__dirname, dir);
+        const moduleFolders = fs.readdirSync(modulePath);
         for (const moduleFolder of moduleFolders) {
-            const commandPath = path.join(valorantPath, moduleFolder + "/commands");
+            const commandPath = path.join(modulePath, moduleFolder + "/commands");
 
             if (fs.existsSync(commandPath)) {
                 const commandFiles = fs.readdirSync(commandPath);
-                console.log(commandFiles);
                 for (const command of commandFiles) {
                     await this.loadCommand(commandPath, command);
                 }
             }
         }
 
-        logger.info("Loaded Commands!");
+        // logger.info(`Loaded ${dir} Commands.`);
     }
 
-    private async loadEvents(): Promise<void> {
-        logger.debug("Loading Events ...");
+    private async loadEvents(dir: string = "discord"): Promise<void> {
+        // logger.debug("Loading Events ...");
 
-        const foldersPath = path.join(__dirname, 'events');
-        const eventFolders = fs.readdirSync(foldersPath);
+        const modulePath = path.join(__dirname, dir);
+        const moduleFolders = fs.readdirSync(modulePath);
 
-        for (const folder of eventFolders) {
-            const eventsPath = path.join(foldersPath, folder);
-            const eventFiles = fs.readdirSync(eventsPath).filter((file: string) => file.endsWith('.js'));
-            for (const file of eventFiles) {
-                const filePath = path.join(eventsPath, file);
-                const event = require(filePath);
+        for (const moduleFolder of moduleFolders) {
+            const eventPath = path.join(modulePath, moduleFolder + "/events");
 
-                if (event.once) {
-                    this.Client.once(event.name, (...args: any) => event.execute(...args));
-                } else {
-                    this.Client.on(event.name, (...args: any) => event.execute(...args));
+            if (fs.existsSync(eventPath)) {
+                const eventFiles = fs.readdirSync(eventPath);
+                for (const eventFile of eventFiles) {
+                    const filePath = path.join(eventPath, eventFile);
+                    const event = require(filePath);
+
+                    if (event.enabled === false) {
+                        logger.warn(`Disabled event => ${eventFile}/${event.name}`);
+                        continue
+                    }
+
+                    if ('name' in event && 'execute' in event) {
+                        if (event.once) {
+                            this.Client.once(event.name, (...args: any) => event.execute(...args));
+                        } else {
+                            this.Client.on(event.name, (...args: any) => event.execute(...args));
+                        }
+
+                        logger.info(`Loaded event => ${eventFile}/${event.name}`);
+                    } else {
+                        logger.warn(`Could not load event => ${eventFile}/${event.name} | (missing data structures)`);
+                    }
                 }
-                logger.debug(`Loaded event => ${event.name}`);
             }
         }
 
-        logger.info("Loaded events!");
+        // logger.info("Loaded events!");
     }
 
     private async initialize_caches(): Promise<void> {
@@ -205,9 +198,11 @@ class DiscordBot {
 
         // Initialize our events after all has loaded. Events could rely on db and cache entries as well./
         await this.loadEvents();
+        await this.loadEvents("valorant");
 
         // Initialize our commands at last.
         await this.loadCommands();
+        await this.loadCommands("valorant");
     }
 
     public async start() {

@@ -12,7 +12,7 @@ import {
     StringSelectMenuOptionBuilder,
     GuildEmoji
 } from "discord.js";
-import { EMBED_COMMAND } from "../../../commands/shared";
+import { EMBED_COMMAND } from "../../../discord/shared";
 import { VALORANT_Premiere, Premiere_ScheduledEvent } from "../premiere";
 import { agent_cache } from "../../content";
 import { discord_bot } from "../../../index";

@@ -6,6 +6,6 @@ const stream = pretty({
     translateTime: "yyyy-mm-dd HH:MM:ss"
 })
 
-const logger = pino({ level: 'debug' }, stream)
+const logger = pino({ level: 'info' }, stream)
 export default logger;
 // module.exports = logger;

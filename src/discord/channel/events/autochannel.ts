@@ -3,7 +3,7 @@ import {
     VoiceState,
     ChannelType,
 } from 'discord.js';
-import {channel_cache} from "../../utils/globalcache";
+import {channel_cache} from "../../../utils/globalcache";
 
 const CATEGORY_WHITELIST: string[] = ["1162179062538715148"];
 // A List with every channel Id used to create channels. (Currently the easiest solution, should later rework this into a more modular system)
