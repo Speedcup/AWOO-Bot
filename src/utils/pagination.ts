@@ -8,7 +8,6 @@ import {
 } from 'discord.js';
 import { v4 as uuidv4 } from 'uuid';
 import {discord_bot} from "../index";
-import {Cache} from "./globalcache";
 
 class PageSelection {
     private uuid: string;

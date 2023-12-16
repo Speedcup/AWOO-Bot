@@ -10,7 +10,6 @@ module.exports = {
             (["premiere_accept", "premiere_deny", "premiere_reminder", "premiere_reset", "premiere_agent_select"].includes(interaction.customId))
         ) {
             const event_id: string | undefined = interaction.message.embeds[0].footer?.text;
-            console.log(interaction.user.id);
 
             if (event_id) {
                 const database = await discord_bot.Client.DB.connect();

@@ -7,7 +7,6 @@ module.exports = {
     async execute() {
         // TODO, make own file.
         discord_bot.Client.on('interactionCreate', async (interaction: any) => {
-            console.log(interaction.customId)
             if (interaction.customId && interaction.customId.includes("|")) {
                 discord_bot.Client.emit(`${interaction.customId.split("|")[0]}|paginator`, interaction)
             }
