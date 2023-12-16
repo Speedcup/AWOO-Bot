@@ -1,3 +1,7 @@
-/*
-    TODO, call update embed function on bot startup.
-*/
+import { UpdatePremiereEmbed } from "../shared";
+
+module.exports = {
+    name: "ready",
+    once: true,
+    async execute() { await UpdatePremiereEmbed(); },
+};

@@ -4,15 +4,20 @@ import {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    CommandInteraction, EmbedBuilder, StringSelectMenuBuilder
+    CommandInteraction, EmbedBuilder, StringSelectMenuBuilder, MessageInteraction, Message
 } from 'discord.js';
+import { v4 as uuidv4 } from 'uuid';
+import {discord_bot} from "../index";
 
 class PageSelection {
+    private uuid: string;
     private readonly pages: EmbedBuilder[];
     private readonly customComponents: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[];
     private readonly time: number;
     private currentPage: number;
-    private currentInteraction: CommandInteraction | null;
+
+    private interaction: ButtonInteraction | undefined;
+    private message: Message | undefined;
 
     public show_previous_button: boolean;
     public show_next_button: boolean;
@@ -24,16 +29,25 @@ class PageSelection {
         showPreviousButton: boolean = true,
         showNextButton: boolean = true)
     {
+        this.uuid = uuidv4();
         this.pages = pages;
 
         this.customComponents = customComponents;
         this.time = time;
 
         this.currentPage = 0;
-        this.currentInteraction = null;
 
         this.show_previous_button = showPreviousButton;
         this.show_next_button = showNextButton;
+
+        /* TODO, create an independent event system.
+        *   Use discord.Client.on(Symbol("unique_symbol"))
+        *   Use discord.Client.emit(Symbol("unique_symbol"))
+        *   Fix - Currently the pageselection system does not reuse themselve, so it creates new events over and over again.
+        */
+        discord_bot.Client.on('interactionCreate', async (interaction: any) => {
+            return await this.callback(interaction, this);
+        });
     }
 
     async create_components(): Promise<ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[]> {
@@ -43,7 +57,7 @@ class PageSelection {
         if (this.show_previous_button) {
             buttons.addComponents(
                 new ButtonBuilder()
-                    .setCustomId('previous_page')
+                    .setCustomId(`${this.uuid}|previous_page`)
                     .setEmoji('⬅️')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(this.currentPage <= 0)
@@ -52,7 +66,7 @@ class PageSelection {
 
         buttons.addComponents(
             new ButtonBuilder()
-                .setCustomId('current_page')
+                .setCustomId(`${this.uuid}|current_page`)
                 .setLabel(`Page ${this.currentPage + 1} / ${this.pages.length}`)
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(true)
@@ -61,7 +75,7 @@ class PageSelection {
         if (this.show_next_button) {
             buttons.addComponents(
                 new ButtonBuilder()
-                    .setCustomId('next_page')
+                    .setCustomId(`${this.uuid}|next_page`)
                     .setEmoji('➡️')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled((this.currentPage + 1) >= this.pages.length)
@@ -79,31 +93,18 @@ class PageSelection {
         const currentPage = this.pages[this.currentPage];
         const buttons = await this.create_components();
 
+        // if (!interaction.deferred) {
+        //     await interaction.deferReply()
+        // }
+
         const response = await interaction.reply(
-            { embeds: [currentPage], components: buttons }
+            {
+                embeds: [currentPage],
+                components: buttons,
+            }
         );
-        this.currentInteraction = interaction;
 
-        const filter = (interaction: MessageComponentInteraction) =>
-            interaction.customId === 'previous_page' || interaction.customId === 'next_page';
-
-        const collector = response.createMessageComponentCollector({ filter, time: this.time });
-
-        collector.on('collect', async (interaction: ButtonInteraction) => {
-            await interaction.deferUpdate();
-            if (interaction.customId === 'previous_page') {
-                this.previousPage();
-            } else if (interaction.customId === 'next_page') {
-                this.nextPage();
-            }
-            await this.updateEmbed();
-        });
-
-        collector.on('end', () => {
-            if (this.currentInteraction) {
-                this.currentInteraction.editReply({ components: [] }).catch(console.error);
-            }
-        });
+        this.message = await interaction.fetchReply();
     }
 
     private nextPage() {
@@ -118,15 +119,39 @@ class PageSelection {
         }
     }
 
-    private async updateEmbed() {
-        if (this.currentInteraction) {
+    private async updateEmbed(interaction: ButtonInteraction | undefined) {
+        if (interaction) {
             const currentPage = this.pages[this.currentPage];
             const components = await this.create_components();
 
-            await this.currentInteraction.editReply({ embeds: [currentPage], components: components });
+            try {
+                await interaction.editReply({embeds: [currentPage], components: components});
+            } catch {}
+        }
+
+        if (this.message && !interaction) {
+            const currentPage = this.pages[this.currentPage];
+            const components = await this.create_components();
+
+            await this.message.edit({ embeds: [currentPage], components: components });
         }
     }
 
+    async edit(message: Message | undefined = undefined) {
+        if (message) {
+            this.message = message;
+        }
+
+        if (this.message) {
+            const currentPage = this.pages[this.currentPage];
+            const components = await this.create_components();
+
+            await this.message.edit({
+                embeds: [currentPage],
+                components: components,
+            })
+        }
+    }
     /*
     // => Something I just copy n pasted from the old solution where I was trying to recreate pageselections based of their interaction message.
     static async from_message(uuid: string, interaction: ButtonInteraction): Promise<PageSelection> {
@@ -179,6 +204,27 @@ class PageSelection {
         return pageSelection;
     }
     */
+
+    async callback(interaction: ButtonInteraction, pageSelection: PageSelection) {
+        if (interaction.customId && interaction.customId.includes("|")) {
+            try {
+                await interaction.deferUpdate();
+            } catch (e) {}
+
+            switch (interaction.customId.split("|")[1]) {
+                case "previous_page":
+                    pageSelection.previousPage();
+                    break;
+                case "next_page":
+                    pageSelection.nextPage();
+                    break;
+                default:
+                    break;
+            }
+
+            await pageSelection.updateEmbed(interaction);
+        }
+    }
 }
 
 export default PageSelection;

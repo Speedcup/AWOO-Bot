@@ -11,7 +11,9 @@ import { Pool } from 'pg';
 import { Collection, Guild } from "discord.js";
 import { MapClass, map_cache } from "./valorant/content/map";
 
-export { discord_bot };
+export { DiscordBot, discord_bot };
+
+require('events').EventEmitter.defaultMaxListeners = 100;
 
 dotenv.config();
 

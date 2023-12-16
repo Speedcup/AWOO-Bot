@@ -1,8 +1,23 @@
-import {EmbedBuilder, SlashCommandBuilder, SlashCommandSubcommandGroupBuilder, time, TimestampStyles} from "discord.js";
-import {Premiere_ScheduledEvent, VALORANT_Premiere} from "./premiere";
+import {
+    ActionRow,
+    ActionRowBuilder, ButtonBuilder, ButtonComponent, ButtonStyle, Component,
+    EmbedBuilder,
+    SlashCommandBuilder,
+    SlashCommandSubcommandGroupBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextChannel,
+    time,
+    TimestampStyles
+} from "discord.js";
+import { Premiere_ScheduledEvent, VALORANT_Premiere } from "./premiere";
 import {discord_bot} from "../../index";
 import {agent_cache} from "../content";
-export { PREMIERE_COMMAND, PREMIERE_MEMBER_COMMAND, WHITELIST, GenerateEventEmbeds };
+import PageSelection from "../../utils/pagination";
+export {
+    PREMIERE_COMMAND, PREMIERE_MEMBER_COMMAND, WHITELIST,
+    UpdatePremiereEmbed, GenerateEventPageSelection, GenerateEventEmbeds
+};
+
+const PREMIERE_CHANNEL_ID = "1165795580858077195";
+const PREMIERE_MESSAGE_ID = "1185402327801274378";
 
 const WHITELIST = ["406420078549270539"];
 
@@ -57,7 +72,8 @@ const GenerateEventEmbed = async (event: Premiere_ScheduledEvent): Promise<Embed
     }
 
     const eventMap = await event.get_map();
-    let event_embed = new EmbedBuilder()
+
+    return new EmbedBuilder()
         .setTitle(`Premiere ➞ ${event.event?.type ?? "?"}`)
         .setColor(0x3498DB)
         .setDescription(
@@ -69,14 +85,12 @@ const GenerateEventEmbed = async (event: Premiere_ScheduledEvent): Promise<Embed
         .setFooter({
             text: event.event_id
         })
-
-    return event_embed;
 }
 
-const GenerateEventEmbeds = async (limit: number = 2): Promise<EmbedBuilder[] | undefined> => {
+const GenerateEventEmbeds = async (limit: number = 2): Promise<EmbedBuilder[]> => {
     const premiere = await new VALORANT_Premiere().fetch_data();
     const scheduledEvents = await premiere.get_events();
-    if (!scheduledEvents) return;
+    if (!scheduledEvents) return [];
 
     let count: number = 0;
     const events: Premiere_ScheduledEvent[] = [];
@@ -96,3 +110,104 @@ const GenerateEventEmbeds = async (limit: number = 2): Promise<EmbedBuilder[] | 
 
     return embeds;
 };
+
+const GenerateEventComponents = async (): Promise<(ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>)[]> => {
+    // Emojis
+    const emoji_correct = discord_bot.Client.emojis.cache.get("1184888948091256932");
+    const emoji_wrong = discord_bot.Client.emojis.cache.get("1184888956479873127");
+    const emoji_trash = discord_bot.Client.emojis.cache.get("1184888993259724810");
+    const emoji_reminder = discord_bot.Client.emojis.cache.get("1184892183900332072");
+
+    const button_components: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>({
+        components: [
+            new ButtonBuilder()
+                .setCustomId("premiere_accept")
+                .setEmoji(emoji_correct ? emoji_correct.id : "✅")
+                .setStyle(ButtonStyle.Primary),
+
+            new ButtonBuilder()
+                .setCustomId("premiere_deny")
+                .setEmoji(emoji_wrong ? emoji_wrong.id : "❌")
+                .setStyle(ButtonStyle.Secondary),
+
+            new ButtonBuilder()
+                .setCustomId("premiere_reminder")
+                .setLabel("Erinnern")
+                .setEmoji(emoji_reminder ? emoji_reminder.id : "⏰")
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(true),
+
+            new ButtonBuilder()
+                .setCustomId("premiere_reset")
+                .setLabel("Zurücksetzen")
+                .setEmoji(emoji_trash ? emoji_trash.id : "♻")
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(true),
+        ]
+    })
+
+    let select_options: StringSelectMenuOptionBuilder[] = [];
+    for (let uuid in agent_cache.getAll()) {
+        const agent = agent_cache.get(uuid);
+
+        if (agent) {
+            select_options.push(
+                new StringSelectMenuOptionBuilder()
+                    .setLabel(String(agent.DisplayName))
+                    .setValue(String(agent.UUID))
+                    .setEmoji(agent.get_emoji().id ?? "⚠")
+            )
+        }
+    }
+
+    const stringselect_component: ActionRowBuilder<StringSelectMenuBuilder> = new ActionRowBuilder<StringSelectMenuBuilder>({
+        components: [
+            new StringSelectMenuBuilder()
+                .setCustomId("premiere_agent_select")
+                .setPlaceholder("Wähle deinen Agent ...")
+                .addOptions(select_options)
+        ]
+    })
+
+    return [button_components, stringselect_component];
+}
+
+const GenerateEventArray = async (limit: number = 2): Promise<{
+    components: (ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>)[];
+    embeds: EmbedBuilder[]
+}[]> => {
+    const embeds: EmbedBuilder[] = await GenerateEventEmbeds(limit);
+    const components: (ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>)[] = await GenerateEventComponents();
+
+    return Array({
+        embeds: embeds,
+        components: components
+    })
+}
+
+const GenerateEventPageSelection = async (limit: number = 2): Promise<PageSelection> => {
+    const data = await GenerateEventArray(limit);
+
+    return new PageSelection(
+        data[0].embeds,
+        data[0].components,
+        0,
+    )
+}
+
+const UpdatePremiereEmbed = async (limit: number = 2) => {
+    console.log(discord_bot.Client.listenerCount("interactionCreate"));
+
+    const message = await discord_bot.Client.channels.fetch(PREMIERE_CHANNEL_ID).then((channel: TextChannel) => {
+        return channel.messages.fetch(PREMIERE_MESSAGE_ID)
+    })
+
+    /*
+    *   Fix - Currently the pageselection system does not reuse themselves, so it creates new events over and over again.
+    *   We are creating a new pageSelection here with new events.
+    *   Fix multiple event creation, create own events with own uuids.
+    */
+
+    const pageSelection = await GenerateEventPageSelection(limit);
+    await pageSelection.edit(message);
+}
