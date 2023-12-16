@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 import { v4 as uuidv4 } from 'uuid';
 import {discord_bot} from "../index";
+import {Cache} from "./globalcache";
 
 class PageSelection {
     private uuid: string;
@@ -16,7 +17,6 @@ class PageSelection {
     private readonly time: number;
     private currentPage: number;
 
-    private interaction: ButtonInteraction | undefined;
     private message: Message | undefined;
 
     public show_previous_button: boolean;
@@ -26,10 +26,11 @@ class PageSelection {
         pages: EmbedBuilder[],
         customComponents: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[] = [],
         time: number = 30000,
+        uuid: string | undefined = undefined,
         showPreviousButton: boolean = true,
         showNextButton: boolean = true)
     {
-        this.uuid = uuidv4();
+        this.uuid = uuid ? uuid : uuidv4();
         this.pages = pages;
 
         this.customComponents = customComponents;
@@ -40,14 +41,17 @@ class PageSelection {
         this.show_previous_button = showPreviousButton;
         this.show_next_button = showNextButton;
 
-        /* TODO, create an independent event system.
-        *   Use discord.Client.on(Symbol("unique_symbol"))
-        *   Use discord.Client.emit(Symbol("unique_symbol"))
-        *   Fix - Currently the pageselection system does not reuse themselve, so it creates new events over and over again.
-        */
-        discord_bot.Client.on('interactionCreate', async (interaction: any) => {
-            return await this.callback(interaction, this);
-        });
+        if (discord_bot.Client.listenerCount(`${this.uuid}|paginator`) == 0) {
+            discord_bot.Client.addListener(`${this.uuid}|paginator`, async (interaction: any) => {
+                return await this.callback(interaction, this);
+            })
+        } else {
+            discord_bot.Client.removeAllListeners(`${this.uuid}|paginator`)
+
+            discord_bot.Client.addListener(`${this.uuid}|paginator`, async (interaction: any) => {
+                return await this.callback(interaction, this);
+            })
+        }
     }
 
     async create_components(): Promise<ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[]> {
@@ -121,11 +125,11 @@ class PageSelection {
 
     private async updateEmbed(interaction: ButtonInteraction | undefined) {
         if (interaction) {
-            const currentPage = this.pages[this.currentPage];
+            const embed = this.pages[this.currentPage];
             const components = await this.create_components();
 
             try {
-                await interaction.editReply({embeds: [currentPage], components: components});
+                await interaction.editReply({embeds: [embed], components: components});
             } catch {}
         }
 
@@ -143,11 +147,11 @@ class PageSelection {
         }
 
         if (this.message) {
-            const currentPage = this.pages[this.currentPage];
+            const embed = this.pages[this.currentPage];
             const components = await this.create_components();
 
             await this.message.edit({
-                embeds: [currentPage],
+                embeds: [embed],
                 components: components,
             })
         }
@@ -224,6 +228,10 @@ class PageSelection {
 
             await pageSelection.updateEmbed(interaction);
         }
+    }
+
+    get_pages(): EmbedBuilder[] {
+        return this.pages
     }
 }
 

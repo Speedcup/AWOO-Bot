@@ -11,6 +11,8 @@ import { Premiere_ScheduledEvent, VALORANT_Premiere } from "./premiere";
 import {discord_bot} from "../../index";
 import {agent_cache} from "../content";
 import PageSelection from "../../utils/pagination";
+import logger from "../../logger";
+
 export {
     PREMIERE_COMMAND, PREMIERE_MEMBER_COMMAND, WHITELIST,
     UpdatePremiereEmbed, GenerateEventPageSelection, GenerateEventEmbeds
@@ -41,7 +43,6 @@ const GenerateEventEmbed = async (event: Premiere_ScheduledEvent): Promise<Embed
 
     const members = await database.query(`SELECT * FROM members`);
     const participation = await database.query(`SELECT * FROM events WHERE event_id = '${event.event_id}'`);
-
     database.release();
 
     // Emojis
@@ -105,7 +106,8 @@ const GenerateEventEmbeds = async (limit: number = 2): Promise<EmbedBuilder[]> =
 
     let embeds: EmbedBuilder[] = [];
     for (const event of events) {
-        embeds.push(await GenerateEventEmbed(event));
+        const embed = await GenerateEventEmbed(event);
+        embeds.push(embed);
     }
 
     return embeds;
@@ -185,29 +187,24 @@ const GenerateEventArray = async (limit: number = 2): Promise<{
     })
 }
 
-const GenerateEventPageSelection = async (limit: number = 2): Promise<PageSelection> => {
-    const data = await GenerateEventArray(limit);
+const GenerateEventPageSelection = async (limit: number = 2, uuid: string | undefined = undefined): Promise<PageSelection> => {
+    // const data = await GenerateEventArray(limit);
+    const embeds = await GenerateEventEmbeds(limit);
+    const components = await GenerateEventComponents();
 
     return new PageSelection(
-        data[0].embeds,
-        data[0].components,
+        embeds,
+        components,
         0,
+        uuid
     )
 }
 
 const UpdatePremiereEmbed = async (limit: number = 2) => {
-    console.log(discord_bot.Client.listenerCount("interactionCreate"));
-
     const message = await discord_bot.Client.channels.fetch(PREMIERE_CHANNEL_ID).then((channel: TextChannel) => {
         return channel.messages.fetch(PREMIERE_MESSAGE_ID)
     })
 
-    /*
-    *   Fix - Currently the pageselection system does not reuse themselves, so it creates new events over and over again.
-    *   We are creating a new pageSelection here with new events.
-    *   Fix multiple event creation, create own events with own uuids.
-    */
-
-    const pageSelection = await GenerateEventPageSelection(limit);
+    const pageSelection = await GenerateEventPageSelection(limit, message.id);
     await pageSelection.edit(message);
 }
