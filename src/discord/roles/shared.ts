@@ -7,7 +7,7 @@ import {
     EmbedBuilder,
     GuildEmoji,
     GuildMember,
-    Role, StringSelectMenuBuilder, StringSelectMenuOptionBuilder
+    Role, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder
 } from "discord.js";
 import { discord_bot } from "../../index";
 
@@ -24,6 +24,10 @@ type CustomRole = {
 const role_cache: Cache<CustomRole> = new Cache<CustomRole>();
 
 export default class RoleSystem {
+    public static slashcommand = new SlashCommandBuilder()
+        .setName('roles')
+        .setDescription('Role Commands')
+
     static get_cache(): Cache<CustomRole> {
         return role_cache;
     }
@@ -93,7 +97,7 @@ export default class RoleSystem {
         database.release();
     }
 
-    static async generate_selection(member: GuildMember): Promise<{
+    static async generate_selection(): Promise<{
         components: (ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>)[];
         embed: EmbedBuilder
     }> { // member: GuildMember

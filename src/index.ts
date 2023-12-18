@@ -8,8 +8,9 @@ import logger from './logger';
 
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
-import { Collection, Guild } from "discord.js";
+import {Collection, Embed, Guild, Message} from "discord.js";
 import { MapClass, map_cache } from "./valorant/content/map";
+import {Cache} from "./utils/globalcache";
 
 export { DiscordBot, discord_bot };
 
@@ -42,7 +43,7 @@ class DiscordBot {
             GatewayIntentBits.AutoModerationExecution,
         ],
         presence: {
-            status: "dnd",
+            status: 'dnd',
             activities: [{
                 name: "Loading ...",
                 type: ActivityType.Custom
@@ -58,6 +59,7 @@ class DiscordBot {
         this.Client.on(Events.Error, (m: string) => logger.error(m));
 
         this.Client.on("ready", ((client: typeof this.Client) => {
+            // Initialize Commands.
             (async () => {
                 // await this.Client.rest.put(
                 //     Routes.applicationCommands(this.Client.application.id),
@@ -196,11 +198,11 @@ class DiscordBot {
     }
 
     private async preStart(): Promise<void> {
-        // Initialize caches before we are loading commands and such, because some commands rely on our caches.
-        await this.initialize_caches();
-
         // Initialize the database at second, because some commands rely on our database.
         await this.initialiseDatabase();
+
+        // Initialize caches before we are loading commands and such, because some commands rely on our caches.
+        await this.initialize_caches();
 
         // Initialize our events after all has loaded. Events could rely on db and cache entries as well./
         await this.loadEvents();

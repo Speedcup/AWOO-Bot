@@ -12,15 +12,15 @@ import {
     GuildMember
 } from "discord.js";
 import RoleSystem from "../shared";
+import EmbedSystem from "../../embed/shared";
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('roles')
-        .setDescription('Role Commands')
+    data: RoleSystem.slashcommand
         .addSubcommand(subcommand => subcommand
             .setName("embed")
             .setDescription("Sende das Rollenverwaltungsembed.")),
     async execute(interaction: CommandInteraction) {
+        console.log(interaction.commandName);
         if (interaction.user.id !== "406420078549270539") {
             return await interaction.reply({
                 content: "Keine Berechtigung.",
@@ -28,10 +28,14 @@ module.exports = {
             })
         }
 
-        const data = await RoleSystem.generate_selection(interaction.member as GuildMember);
-        return await interaction.reply({
+        const data = await RoleSystem.generate_selection();
+        await interaction.reply({
             embeds: [data.embed],
             components: data.components
         });
+
+        /* Embed System Integration */
+        const message = await interaction.fetchReply();
+        await EmbedSystem.add_embed("rolesystem", message);
     },
 };
