@@ -128,14 +128,15 @@ export default class RoleSystem {
         return {
             embed:
                 new EmbedBuilder()
-                    .setTitle(`[${star_emoji}]━━━━━━━━━━━━▶ Rollen System ◀━━━━━━━━━━━━`)
+                    .setTitle(`【${star_emoji}】━━━━━━━━▶ Rollen System ◀━━━━━━━━【${star_emoji}】`)
                     .setDescription(
-                        "**Wähle aus dem Dropdown-Menü die Spiele aus, die du derzeit aktiv spielst.**\n" +
+                        "> **Wähle aus dem Dropdown-Menü die Spiele aus, die du derzeit aktiv spielst.**\n" +
                         "↬ Durch diese Auswahl erhältst du nicht nur Benachrichtigungen, sondern auch Zugriff auf spezifische Bereiche."
                     )
                     .setFooter({
                         text: "Wenn du eine Rolle entfernen möchtest, wähle die Rolle einfach erneut aus oder drücke auf Zurücksetzen um alle vergebenen Rollen zu entfernen."
-                    }),
+                    })
+                    .setThumbnail(discord_bot.Client.users.cache.get(discord_bot.Client.application.id)?.avatarURL()),
             components: [
                 new ActionRowBuilder<ButtonBuilder>()
                     .addComponents(

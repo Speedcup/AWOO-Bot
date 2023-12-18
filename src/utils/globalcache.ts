@@ -14,6 +14,10 @@ class Cache<T> {
         private ttl?: number,
     ) {}
 
+    get_keys(): string[] {
+        return Object.keys(this.cache)
+    }
+
     getAll(): { [p: string]: T } {
         return this.cache
     }

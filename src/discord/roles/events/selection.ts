@@ -3,36 +3,49 @@ import RoleSystem from "../shared";
 
 module.exports = {
     name: Events.InteractionCreate,
-    async execute(interaction: ButtonInteraction) {
-        if (interaction.isButton() && interaction.customId.includes("role_selection")) {
+    async execute(interaction: StringSelectMenuInteraction | ButtonInteraction) {
+        if (interaction.customId && interaction.customId.includes("role_selection")) {
             if (interaction.member && interaction.guild) {
-                // await interaction.deferReply(
-                //     {ephemeral: true}
-                // );
-
                 const member: GuildMember | undefined = interaction.guild.members.cache.get(interaction.member.user.id);
 
                 if (member) {
-                    const role_id = interaction.customId.split("role_selection_")[1]
-                    const role = interaction.guild.roles.cache.get(role_id);
+                    let name: string = "";
 
-                    if (role) {
-                        const has_role: boolean = member.roles.cache.has(role.id)
+                    switch (interaction.customId) {
+                        case "role_selection":
+                            const role_id = interaction.isStringSelectMenu() ? interaction.values[0] : ""
+                            const role = interaction.guild.roles.cache.get(role_id);
 
-                        if (has_role) {
-                            await member.roles.remove(role.id)
-                        } else {
-                            await member.roles.add(role.id)
-                        }
+                            if (role) {
+                                const has_role: boolean = member.roles.cache.has(role.id)
+                                name = has_role ? `${role} wurde dir erfolgreich entfernt.` : `${role} wurde dir erfolgreich hinzugefügt.`;
+
+                                if (has_role) {
+                                    await member.roles.remove(role.id)
+                                } else {
+                                    await member.roles.add(role.id)
+                                }
+                            }
+                            break;
+                        case "role_selection_all":
+                            name = `Dir wurden erfolgreich alle verfügbaren Rollen hinzugefügt.`;
+                            await member.roles.add(RoleSystem.get_cache().get_keys());
+
+                            break;
+                        case "role_selection_reset":
+                            name = `Dir wurden erfolgreich alle verfügbaren Rollen entfernt.`;
+                            await member.roles.remove(RoleSystem.get_cache().get_keys());
+
+                            break;
+                        default:
+                            name = `Es ist ein unbekannter Fehler aufgetreten.`
+                            break
                     }
 
-                    try {
-                        const data = await RoleSystem.generate_selection(member);
-                        await interaction.editReply({
-                            embeds: [data.embed],
-                            components: data.components
-                        })
-                    } catch (e) {}
+                    return await interaction.reply({
+                        content: name,
+                        ephemeral: true
+                    })
                 }
             }
         }
