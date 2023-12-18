@@ -4,14 +4,16 @@ import {
     CommandInteraction,
     EmbedBuilder,
     ButtonBuilder,
-    ButtonStyle, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ActionRowBuilder
+    ButtonStyle, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ActionRowBuilder, SlashCommandBuilder
 } from "discord.js";
-import { EMBED_COMMAND } from "../../shared";
 
 module.exports = {
-    data: EMBED_COMMAND.addSubcommand(subcommand => subcommand
+    data: new SlashCommandBuilder()
         .setName('channel')
-        .setDescription('Sende das Kanalverwaltungs Embed')),
+        .setDescription('Channel Commands')
+        .addSubcommand(subcommand => subcommand
+            .setName("embed")
+            .setDescription("Sende das Kanalverwaltungsembed.")),
     async execute(interaction: CommandInteraction) {
         let select_options: StringSelectMenuOptionBuilder[] = [];
 

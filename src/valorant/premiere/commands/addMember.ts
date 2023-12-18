@@ -1,23 +1,37 @@
 /* Send Premiere Embed */
 
 import {
-    CommandInteraction,
+    CommandInteraction, SlashCommandBuilder, SlashCommandSubcommandGroupBuilder,
 } from "discord.js";
-import {PREMIERE_COMMAND, PREMIERE_MEMBER_COMMAND, WHITELIST} from "../shared";
+import {WHITELIST} from "../shared";
 import {discord_bot} from "../../../index";
 
+// TODO, add member remove option.
 module.exports = {
-    data: PREMIERE_COMMAND.addSubcommandGroup(PREMIERE_MEMBER_COMMAND).addSubcommand(subcommand => subcommand
-        .setName('add')
-        .setDescription('Füge ein Mitglied zum Roaster hinzu.')
-        .addUserOption(option =>
-            option.setName('user').setDescription('Das Mitglied, das hinzugefügt werden soll').setRequired(true)
-        )
-        .addBooleanOption(option => option
-            .setName("bench")
-            .setDescription("Ist der Spieler ein Auswechselspieler? (Bench Player)")
-        )
-    ),
+    data: new SlashCommandBuilder()
+        .setName('premiere')
+        .setDescription('Premiere commands')
+        .addSubcommandGroup(subcommandGroup =>
+            subcommandGroup
+                .setName('member')
+                .setDescription('Manage the current Premiere Roaster.')
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('add')
+                        .setDescription('Add a member to the Roaster.')
+                        .addUserOption(option =>
+                            option
+                                .setName('user')
+                                .setDescription('The member to be added.')
+                                .setRequired(true)
+                        )
+                        .addBooleanOption(option =>
+                            option
+                                .setName('bench')
+                                .setDescription('Is the player a Bench Player?')
+                        )
+                )
+        ),
     async execute(interaction: CommandInteraction) {
         if (!WHITELIST.includes(interaction.user.id)) return;
 

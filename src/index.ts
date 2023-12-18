@@ -59,6 +59,11 @@ class DiscordBot {
 
         this.Client.on("ready", ((client: typeof this.Client) => {
             (async () => {
+                // await this.Client.rest.put(
+                //     Routes.applicationCommands(this.Client.application.id),
+                //     { body: [] },
+                // )
+
                 const commands: JSON[] = [];
                 this.Client.commands.map((command: any) => {
                     commands.push(command.data.toJSON());
@@ -81,7 +86,6 @@ class DiscordBot {
             if (!interaction.isChatInputCommand()) return;
 
             const command = this.Client.commands.get(interaction.commandName);
-
             if (!command) {
                 logger.error(`No command matching ${interaction.commandName} was found.`);
                 return;

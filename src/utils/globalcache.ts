@@ -59,6 +59,28 @@ class Cache<T> {
 
         return null;
     }
+
+    [Symbol.iterator](): Iterator<[string, T]> {
+        const keys = Object.keys(this.cache);
+        let index = 0;
+
+        return {
+            next: (): IteratorResult<[string, T]> => {
+                if (index < keys.length) {
+                    const key = keys[index++];
+                    return {
+                        value: [key, this.cache[key]],
+                        done: false,
+                    };
+                } else {
+                    return {
+                        value: undefined,
+                        done: true,
+                    };
+                }
+            },
+        };
+    }
 }
 
 const channel_cache = new Cache<string>();

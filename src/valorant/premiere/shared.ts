@@ -14,7 +14,7 @@ import PageSelection from "../../utils/pagination";
 import logger from "../../logger";
 
 export {
-    PREMIERE_COMMAND, PREMIERE_MEMBER_COMMAND, WHITELIST,
+    WHITELIST,
     UpdatePremiereEmbed, GenerateEventPageSelection, GenerateEventEmbeds
 };
 
@@ -23,20 +23,6 @@ const PREMIERE_MESSAGE_ID = "1185402327801274378";
 
 const WHITELIST = ["406420078549270539"];
 
-const PREMIERE_MEMBER_COMMAND = new SlashCommandSubcommandGroupBuilder()
-    .setName("member")
-    .setDescription("Verwalte das derzeitige Premiere Roaster.")
-
-const PREMIERE_COMMAND = new SlashCommandBuilder()
-    .setName('premiere')
-    .setDescription('Premiere-Befehle!')
-    .setDefaultMemberPermissions(0)
-    // .addSubcommandGroup(PREMIERE_MEMBER_COMMAND);
-
-// const PREMIERE_MEMBER_COMMAND = PREMIERE_COMMAND.addSubcommandGroup(subcommandGroup => subcommandGroup
-//     .setName("member")
-//     .setDescription("Verwalte das derzeitige Premiere Roaster.")
-// )
 
 const GenerateEventEmbed = async (event: Premiere_ScheduledEvent): Promise<EmbedBuilder> => {
     const database = await discord_bot.Client.DB.connect();
@@ -201,10 +187,27 @@ const GenerateEventPageSelection = async (limit: number = 2, uuid: string | unde
 }
 
 const UpdatePremiereEmbed = async (limit: number = 2) => {
+    const premiere = await new VALORANT_Premiere().fetch_data();
+    const scheduledEvents = await premiere.get_events();
+
     const message = await discord_bot.Client.channels.fetch(PREMIERE_CHANNEL_ID).then((channel: TextChannel) => {
         return channel.messages.fetch(PREMIERE_MESSAGE_ID)
     })
 
-    const pageSelection = await GenerateEventPageSelection(limit, message.id);
-    await pageSelection.edit(message);
+    if (scheduledEvents ? (scheduledEvents.length <= 0) : true) {
+        await message.edit({
+            embeds: [
+                new EmbedBuilder()
+                    .setTitle(`Premiere ➞ Keine Matches`)
+                    .setColor(0xE81123)
+                    .setDescription(`Derzeit finden keine Events statt.`)
+                    .setThumbnail("https://cdn.henrikdev.xyz/valorant/v1/premier/team-icon/f6cdfd06-4a98-792a-3a37-a88805ba99ce?primary=0d0c0d&secondary=06347f&tertiary=d6cec0")
+                    .setImage("https://media.valorant-api.com/playercards/c8c31580-4315-967b-998b-dfa377bb8843/wideart.png")
+            ],
+            components: []
+        })
+    } else {
+        const pageSelection = await GenerateEventPageSelection(limit, message.id);
+        await pageSelection.edit(message);
+    }
 }
