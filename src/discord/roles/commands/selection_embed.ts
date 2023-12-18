@@ -28,14 +28,10 @@ module.exports = {
             })
         }
 
-        await interaction.deferReply(
-            {ephemeral: true}
-        );
-
-        const data = await RoleSystem.generate_selection(interaction.member as GuildMember)
+        const data = await RoleSystem.generate_selection(interaction.member as GuildMember);
         return await interaction.reply({
             embeds: [data.embed],
-            components: [data.components]
+            components: data.components
         });
     },
 };

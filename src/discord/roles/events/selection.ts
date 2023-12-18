@@ -30,7 +30,7 @@ module.exports = {
                         const data = await RoleSystem.generate_selection(member);
                         await interaction.editReply({
                             embeds: [data.embed],
-                            components: [data.components]
+                            components: data.components
                         })
                     } catch (e) {}
                 }

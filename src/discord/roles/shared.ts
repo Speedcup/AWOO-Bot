@@ -7,7 +7,7 @@ import {
     EmbedBuilder,
     GuildEmoji,
     GuildMember,
-    Role
+    Role, StringSelectMenuBuilder, StringSelectMenuOptionBuilder
 } from "discord.js";
 import { discord_bot } from "../../index";
 
@@ -93,7 +93,12 @@ export default class RoleSystem {
         database.release();
     }
 
-    static async generate_selection(member: GuildMember): Promise<{embed: EmbedBuilder, components: ActionRowBuilder<ButtonBuilder>}> { // member: GuildMember
+    static async generate_selection(member: GuildMember): Promise<{
+        components: (ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>)[];
+        embed: EmbedBuilder
+    }> { // member: GuildMember
+        /*
+        // Old System with buttons.
         const components: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
 
         for (const [key, data] of this.get_cache()) {
@@ -105,16 +110,55 @@ export default class RoleSystem {
                     .setCustomId(`role_selection_${data.role.id}`)
             )
         }
+        */
+        const emoji_trash = discord_bot.Client.emojis.cache.get("1184888993259724810");
+        const star_emoji = discord_bot.Client.emojis.cache.get("1186289987348598784");
+        const magicwand_emoji = discord_bot.Client.emojis.cache.get("1186303818527424583");
+
+        const options: StringSelectMenuOptionBuilder[] = []
+        for (const [key, data] of this.get_cache()) {
+            options.push(
+                new StringSelectMenuOptionBuilder()
+                    .setLabel(data.role.name)
+                    .setValue(data.role.id)
+                    .setEmoji(data.emoji.id)
+            )
+        }
 
         return {
             embed:
                 new EmbedBuilder()
-                    .setTitle("Rollenverwaltung")
+                    .setTitle(`[${star_emoji}]━━━━━━━━━━━━▶ Rollen System ◀━━━━━━━━━━━━`)
                     .setDescription(
-                        "Hier kannst du deine eigenen Rollen verwalten.\n" + "Blau = Ausgewählt | Grau = Abgewählt"
+                        "**Wähle aus dem Dropdown-Menü die Spiele aus, die du derzeit aktiv spielst.**\n" +
+                        "↬ Durch diese Auswahl erhältst du nicht nur Benachrichtigungen, sondern auch Zugriff auf spezifische Bereiche."
                     )
-                    .setThumbnail(member.displayAvatarURL()),
-            components: components
+                    .setFooter({
+                        text: "Wenn du eine Rolle entfernen möchtest, wähle die Rolle einfach erneut aus oder drücke auf Zurücksetzen um alle vergebenen Rollen zu entfernen."
+                    }),
+            components: [
+                new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setLabel("Alle Hinzufügen")
+                            .setStyle(ButtonStyle.Primary)
+                            .setEmoji(magicwand_emoji.id)
+                            .setCustomId("role_selection_all"),
+
+                        new ButtonBuilder()
+                            .setLabel("Zurücksetzen")
+                            .setStyle(ButtonStyle.Secondary)
+                            .setEmoji(emoji_trash.id)
+                            .setCustomId("role_selection_reset"),
+                ),
+                new ActionRowBuilder<StringSelectMenuBuilder>()
+                    .addComponents(
+                        new StringSelectMenuBuilder()
+                            .setPlaceholder("Wähle eine Rolle ...")
+                            .setCustomId("role_selection")
+                            .addOptions(options)
+                    )
+            ]
         }
     }
 }
