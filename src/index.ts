@@ -8,7 +8,7 @@ import logger from './logger';
 
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
-import {Collection, Embed, Guild, Message} from "discord.js";
+import {Collection, CommandInteraction, CommandInteractionOptionResolver, Embed, Guild, Message} from "discord.js";
 import { MapClass, map_cache } from "./valorant/content/map";
 import {Cache} from "./utils/globalcache";
 
@@ -84,14 +84,18 @@ class DiscordBot {
             logger.info(`Ready! Logged in as ${client.user.tag}`);
         }))
 
-        this.Client.on(Events.InteractionCreate, async (interaction: any) => {
+        this.Client.on(Events.InteractionCreate, async (interaction: CommandInteraction) => {
             if (!interaction.isChatInputCommand()) return;
 
             const command = this.Client.commands.get(interaction.commandName);
             if (!command) {
-                logger.error(`No command matching ${interaction.commandName} was found.`);
-                return;
+                logger.error(`No command matching ${interaction.commandName} was found.`); return
             }
+
+            // const options = interaction.options as CommandInteractionOptionResolver;
+            // if (options.getSubcommand()) {
+            //     const subcommand = command.getSubcommand();
+            // }
 
             try {
                 await command.execute(interaction);

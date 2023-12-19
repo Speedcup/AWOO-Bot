@@ -27,7 +27,6 @@ module.exports = {
             ),
         ),
     async execute(interaction: CommandInteraction) {
-        console.log(interaction.commandName);
         if (interaction.user.id !== "406420078549270539") {
             return await interaction.reply({
                 content: "Keine Berechtigung.",

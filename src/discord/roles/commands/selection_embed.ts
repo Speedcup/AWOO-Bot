@@ -9,7 +9,7 @@ import {
     StringSelectMenuBuilder,
     ActionRowBuilder,
     SlashCommandBuilder,
-    GuildMember
+    GuildMember, CommandInteractionOptionResolver
 } from "discord.js";
 import RoleSystem from "../shared";
 import EmbedSystem from "../../embed/shared";
@@ -20,7 +20,9 @@ module.exports = {
             .setName("embed")
             .setDescription("Sende das Rollenverwaltungsembed.")),
     async execute(interaction: CommandInteraction) {
-        console.log(interaction.commandName);
+        const options = interaction.options as CommandInteractionOptionResolver;
+
+        if (options.getSubcommand() == "embed") {
         if (interaction.user.id !== "406420078549270539") {
             return await interaction.reply({
                 content: "Keine Berechtigung.",
@@ -37,5 +39,5 @@ module.exports = {
         /* Embed System Integration */
         const message = await interaction.fetchReply();
         await EmbedSystem.add_embed("rolesystem", message);
-    },
+    }},
 };
