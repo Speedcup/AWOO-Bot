@@ -47,7 +47,12 @@ module.exports = {
             })
         }
 
-        await RoleSystem.add_role(role, emoji ? emoji : "");
+        await RoleSystem.add_role(role, emoji ? emoji.trim() : "0");
         await EmbedSystem.update_embed("rolesystem");
+
+        await interaction.reply({
+            content: `Die Rolle ${role} wurde erfolgreich dem System hinzugefügt.`,
+            ephemeral: true
+        })
     },
 };

@@ -56,9 +56,15 @@ export default class RoleSystem {
         }
     }
 
-    static async add_role(role: Role, emoji_id: GuildEmoji | string): Promise<void> {
+    static async add_role(role: Role, emoji_id: GuildEmoji | string = "0"): Promise<void> {
         if (emoji_id instanceof GuildEmoji) {
             emoji_id = emoji_id.id;
+        }
+
+        if (emoji_id.startsWith("<") && emoji_id.endsWith(">")) {
+            let emojiString = emoji_id.slice(1, -1);
+            let splittedString = emojiString.split(":");
+            emoji_id = splittedString[splittedString.length - 1];
         }
 
         const database = await discord_bot.Client.DB.connect();
@@ -69,7 +75,7 @@ export default class RoleSystem {
             return await this.edit_role(role, emoji_id);
         }
 
-        await database.query(`INSERT INTO roles ('id', 'emoji_id') VALUES ('${role.id}', '${emoji_id}')`);
+        await database.query(`INSERT INTO roles (id, emoji_id) VALUES ('${role.id}', '${emoji_id}')`);
         database.release();
     }
 
@@ -121,12 +127,20 @@ export default class RoleSystem {
 
         const options: StringSelectMenuOptionBuilder[] = []
         for (const [key, data] of this.get_cache()) {
-            options.push(
-                new StringSelectMenuOptionBuilder()
-                    .setLabel(data.role.name)
-                    .setValue(data.role.id)
-                    .setEmoji(data.emoji.id)
-            )
+            if (data.emoji) {
+                options.push(
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel(data.role.name)
+                        .setValue(data.role.id)
+                        .setEmoji(data.emoji.id)
+                )
+            } else {
+                options.push(
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel(data.role.name)
+                        .setValue(data.role.id)
+                )
+            }
         }
 
         return {
@@ -134,12 +148,22 @@ export default class RoleSystem {
                 new EmbedBuilder()
                     .setTitle(`【${star_emoji}】━━━━━━━━▶ Rollen System ◀━━━━━━━━【${star_emoji}】`)
                     .setDescription(
-                        "> **Wähle aus dem Dropdown-Menü die Spiele aus, die du derzeit aktiv spielst.**\n" +
-                        "↬ Durch diese Auswahl erhältst du nicht nur Benachrichtigungen, sondern auch Zugriff auf spezifische Bereiche."
+                        "> **Was ist das Rollensystem?**\n" +
+                        "↬ Das System gibt dir die Möglichkeit aus dem Dropdown verschiedene Spiele auszuwählen, welche du derzeit aktiv spielst.\n" +
+                        "↬ Das System soll verhindern, dass der Discord überladen wirkt und du auch wirklich nur das siehst, was dich interessiert.\n\n" +
+                        "> **Was bringt mir das?**\n" +
+                        "↬ Du erhältst Benachrichtigung bezüglich der Spielersuche.\n" +
+                        "↬ Du erhältst Zugriff auf die für das Spiel vorgesehenen Bereiche.\n" +
+                        "↬ Andere Mitglieder sehen, dass du das Spiel auch spielst.\n\n" +
+                        "> **Ich möchte ein Spiel entfernen**\n" +
+                        "↬ Wähle die Rolle einfach erneut aus oder drücke auf Zurücksetzen um alle Spiele wieder zu entfernen.\n\n" +
+                        "> **Ich habe eine Rolle ausgewählt, und sehe trotzdem nichts neues?**\n" +
+                        "↬ Es ist Möglich, dass das Spiel nur als eine Symbolisierung für andere Mitglieder fungiert, da noch kein Bedarf an einem eigenen Bereich besteht.\n" +
+                        "↬ Bei Bedarf werden weitere Bereiche für bestimmte Spiele eingerichtet."
                     )
-                    .setFooter({
-                        text: "Wenn du eine Rolle entfernen möchtest, wähle die Rolle einfach erneut aus oder drücke auf Zurücksetzen um alle vergebenen Rollen zu entfernen."
-                    })
+                    // .setFooter({
+                    //     text: "Wenn du eine Rolle entfernen möchtest, wähle die Rolle einfach erneut aus oder drücke auf Zurücksetzen um alle vergebenen Rollen zu entfernen."
+                    // })
                     .setThumbnail(discord_bot.Client.users.cache.get(discord_bot.Client.application.id)?.avatarURL()),
             components: [
                 new ActionRowBuilder<ButtonBuilder>()

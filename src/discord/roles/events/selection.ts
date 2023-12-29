@@ -23,13 +23,13 @@ module.exports = {
                                 if (has_role) {
                                     await member.roles.remove(role.id)
                                 } else {
-                                    await member.roles.add(role.id)
+                                    await member.roles.add(["1184242513708589066", role.id])
                                 }
                             }
                             break;
                         case "role_selection_all":
                             name = `Dir wurden erfolgreich alle verfügbaren Rollen hinzugefügt.`;
-                            await member.roles.add(RoleSystem.get_cache().get_keys());
+                            await member.roles.add(["1184242513708589066", ...RoleSystem.get_cache().get_keys()]);
 
                             break;
                         case "role_selection_reset":

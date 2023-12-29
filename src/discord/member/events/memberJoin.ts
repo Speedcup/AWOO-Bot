@@ -1,11 +1,8 @@
 import {
     EmbedBuilder,
     Events,
-    GuildBasedChannel,
     GuildMember,
-    GuildTextBasedChannel,
     TextChannel,
-    TimestampStyles
 } from 'discord.js';
 
 module.exports = {
@@ -14,6 +11,7 @@ module.exports = {
         (async () => {
             const channel = await member.guild.channels.fetch("1162178589022761052") as TextChannel;
 
+            await member.roles.add("1184242513708589066", "1184243632761487428"); // categories.
             await channel.send({
                 embeds: [
                     new EmbedBuilder()
