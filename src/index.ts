@@ -8,7 +8,15 @@ import logger from './logger';
 
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
-import {Collection, CommandInteraction, CommandInteractionOptionResolver, Embed, Guild, Message} from "discord.js";
+import {
+    Collection,
+    CommandInteraction,
+    CommandInteractionOptionResolver,
+    Embed,
+    Guild,
+    Message,
+    SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandSubcommandGroupBuilder
+} from "discord.js";
 import { MapClass, map_cache } from "./valorant/content/map";
 import {Cache} from "./utils/globalcache";
 
@@ -68,7 +76,7 @@ class DiscordBot {
 
                 const commands: JSON[] = [];
                 this.Client.commands.map((command: any) => {
-                    commands.push(command.data.toJSON());
+                    commands.push(command.toJSON());
                 })
 
                 await this.Client.rest.put(
@@ -87,22 +95,57 @@ class DiscordBot {
         this.Client.on(Events.InteractionCreate, async (interaction: CommandInteraction) => {
             if (!interaction.isChatInputCommand()) return;
 
+            const send_error = async () => {
+                logger.warn("Unknown command got executed.");
+
+                await interaction.reply({
+                    content: "No command has been found.",
+                    ephemeral: true
+                });
+            };
+
             const command = this.Client.commands.get(interaction.commandName);
-            if (!command) {
-                logger.error(`No command matching ${interaction.commandName} was found.`); return
+            if (!command) { return await send_error(); }
+
+            const options = interaction.options as CommandInteractionOptionResolver;
+
+            if (options.getSubcommand()) {
+                if (options.getSubcommandGroup()) {
+                    const subCommandGroup = command.options.find((subCommandGroup: SlashCommandSubcommandGroupBuilder) => subCommandGroup.name === options.getSubcommandGroup());
+                    if (!subCommandGroup) { return await send_error(); }
+
+                    const subCommand = subCommandGroup.options.find((subCommand: SlashCommandSubcommandBuilder) => subCommand.name === options.getSubcommand());
+                    if (!subCommand) { return await send_error(); }
+
+                    await subCommand.execute(interaction);
+                } else {
+                    const subCommand = command.options.find((subCommand: SlashCommandSubcommandBuilder) => subCommand.name === options.getSubcommand());
+                    if (!subCommand) { return await send_error(); }
+
+                    await subCommand.execute(interaction);
+                }
             }
+
+            await interaction.reply({
+                content: "Acknowledged.",
+                ephemeral: true
+            })
+            // const command = this.Client.commands.get(interaction.commandName);
+            // if (!command) {
+            //     logger.error(`No command matching ${interaction.commandName} was found.`); return
+            // }
 
             // const options = interaction.options as CommandInteractionOptionResolver;
             // if (options.getSubcommand()) {
             //     const subcommand = command.getSubcommand();
             // }
 
-            try {
-                await command.execute(interaction);
-            } catch (error) {
-                logger.error(`Error executing ${interaction.commandName}`);
-                logger.error(error);
-            }
+            // try {
+            //     await command.execute(interaction);
+            // } catch (error) {
+            //     logger.error(`Error executing ${interaction.commandName}`);
+            //     logger.error(error);
+            // }
         });
     }
 
@@ -110,12 +153,49 @@ class DiscordBot {
         const filePath = path.join(commandPath, file);
         const command = require(filePath);
         // Set a new item in the Collection with the key as the command name and the value as the exported module
-        if ('data' in command && 'execute' in command) {
-            this.Client.commands.set(command.data.name, command);
-            logger.info(`Loaded Command => ${file}/${command.data.name}.`);
-        } else {
-            logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+
+        if (command.enabled === false) {
+            // logger.warn(`Disabled command => ${file}/${command.command.name}.`);
+
+            return
         }
+
+        if (!command.command) {
+            logger.warn(`Failed to load command => ${file}. (No command was provided.)`);
+
+            return
+        }
+
+        if (!command.execute) {
+            logger.warn(`Failed to load command => ${file}/${command.command.name}. (No execute was provided.)`);
+
+            return
+        }
+
+        let commandInteraction: SlashCommandBuilder = command.command;
+        // if (command.command) {
+        //     commandInteraction = command.command;
+        // }
+
+        const old_command = this.Client.commands.get(command.command.name);
+        if (old_command) {
+            commandInteraction = old_command;
+        }
+
+        if (command.subCommand) {
+            command.subCommand.execute = command.execute;
+
+            if (command.subCommandGroup) {
+                command.subCommandGroup.addSubcommand(command.subCommand);
+                commandInteraction.addSubcommandGroup(command.subCommandGroup)
+            } else {
+                commandInteraction.addSubcommand(command.subCommand)
+            }
+        }
+
+        // Analyse the command type.
+        this.Client.commands.set(command.command.name, commandInteraction);
+        logger.info(`Loaded Command => ${file}/${command.command.name}.`);
     }
 
     private async loadCommands(dir: string = "discord"): Promise<void> {
@@ -164,7 +244,7 @@ class DiscordBot {
                             this.Client.on(event.name, (...args: any) => event.execute(...args));
                         }
 
-                        logger.info(`Loaded event => ${eventFile}/${event.name}`);
+                        // logger.info(`Loaded event => ${eventFile}/${event.name}`);
                     } else {
                         logger.warn(`Could not load event => ${eventFile}/${event.name} | (missing data structures)`);
                     }

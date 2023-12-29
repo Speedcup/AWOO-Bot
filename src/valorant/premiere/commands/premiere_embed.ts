@@ -1,16 +1,16 @@
 /* Send Premiere Embed */
 
-import {CommandInteraction, SlashCommandBuilder} from "discord.js";
+import {CommandInteraction, SlashCommandBuilder, SlashCommandSubcommandBuilder} from "discord.js";
 import { GenerateEventPageSelection } from "../shared";
 import PageSelection from "../../../utils/pagination";
 
 module.exports = {
-    data: new SlashCommandBuilder()
+    command: new SlashCommandBuilder()
         .setName('premiere')
-        .setDescription('Premiere commands')
-        .addSubcommand(subcommand => subcommand
+        .setDescription('Premiere commands'),
+    subCommand: new SlashCommandSubcommandBuilder()
             .setName("embed")
-            .setDescription("Sende das Premiere Embed.")),
+            .setDescription("Sende das Premiere Embed."),
     async execute(interaction: CommandInteraction) {
         const pageSelection: PageSelection = await GenerateEventPageSelection();
         await pageSelection.send(interaction);

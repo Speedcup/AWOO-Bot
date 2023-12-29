@@ -15,6 +15,7 @@ import RoleSystem from "../shared";
 import EmbedSystem from "../../embed/shared";
 
 module.exports = {
+    enabled: false,
     data: RoleSystem.slashcommand
         .addSubcommand(subcommand => subcommand
             .setName("embed")

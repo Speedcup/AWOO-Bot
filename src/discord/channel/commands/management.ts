@@ -8,6 +8,7 @@ import {
 } from "discord.js";
 
 module.exports = {
+    enabled: false,
     data: new SlashCommandBuilder()
         .setName('channel')
         .setDescription('Channel Commands')

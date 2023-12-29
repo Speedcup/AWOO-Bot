@@ -1,36 +1,32 @@
 /* Send Premiere Embed */
 
 import {
-    CommandInteraction, SlashCommandBuilder, SlashCommandSubcommandGroupBuilder,
+    CommandInteraction, SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandSubcommandGroupBuilder,
 } from "discord.js";
 import {WHITELIST} from "../shared";
 import {discord_bot} from "../../../index";
 
 // TODO, add member remove option.
 module.exports = {
-    data: new SlashCommandBuilder()
+    command: new SlashCommandBuilder()
         .setName('premiere')
-        .setDescription('Premiere commands')
-        .addSubcommandGroup(subcommandGroup =>
-            subcommandGroup
-                .setName('member')
-                .setDescription('Manage the current Premiere Roaster.')
-                .addSubcommand(subcommand =>
-                    subcommand
-                        .setName('add')
-                        .setDescription('Add a member to the Roaster.')
-                        .addUserOption(option =>
-                            option
-                                .setName('user')
-                                .setDescription('The member to be added.')
-                                .setRequired(true)
-                        )
-                        .addBooleanOption(option =>
-                            option
-                                .setName('bench')
-                                .setDescription('Is the player a Bench Player?')
-                        )
-                )
+        .setDescription('Premiere commands'),
+    subCommandGroup: new SlashCommandSubcommandGroupBuilder()
+        .setName('member')
+        .setDescription('Manage the current Premiere Roaster.'),
+    subCommand: new SlashCommandSubcommandBuilder()
+        .setName('add')
+        .setDescription('Add a member to the Roaster.')
+        .addUserOption(option =>
+            option
+                .setName('user')
+                .setDescription('The member to be added.')
+                .setRequired(true)
+        )
+        .addBooleanOption(option =>
+            option
+                .setName('bench')
+                .setDescription('Is the player a Bench Player?')
         ),
     async execute(interaction: CommandInteraction) {
         if (!WHITELIST.includes(interaction.user.id)) return;
