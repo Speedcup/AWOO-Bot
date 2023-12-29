@@ -3,29 +3,27 @@
 import {
     CommandInteraction,
     SlashCommandBuilder,
-    CommandInteractionOptionResolver, Role
+    CommandInteractionOptionResolver, Role, SlashCommandSubcommandBuilder
 } from "discord.js";
 import RoleSystem from "../shared";
 import EmbedSystem from "../../embed/shared";
 
 module.exports = {
-    enabled: false,
-    data: RoleSystem.slashcommand
-        .addSubcommand(subcommand => subcommand
-            .setName("add")
-            .setDescription("Füge eine Custom Rolle hinzu.")
-            .addRoleOption(
-                option => option
+    command: RoleSystem.slashcommand,
+    subCommand: new SlashCommandSubcommandBuilder()
+        .setName("add")
+        .setDescription("Füge eine Custom Rolle hinzu.")
+        .addRoleOption(
+            option => option
                 .setName("role")
                 .setDescription("Die Rolle, welche hinzugefügt werden soll.")
                 .setRequired(true)
-            )
-            .addStringOption(
-                option => option
-                    .setName("emoji")
-                    .setDescription("Das Emoji welche die Rolle repräsentiert. (Optional)")
-                    .setRequired(false)
-            ),
+        )
+        .addStringOption(
+            option => option
+                .setName("emoji")
+                .setDescription("Das Emoji welche die Rolle repräsentiert. (Optional)")
+                .setRequired(false)
         ),
     async execute(interaction: CommandInteraction) {
         if (interaction.user.id !== "406420078549270539") {

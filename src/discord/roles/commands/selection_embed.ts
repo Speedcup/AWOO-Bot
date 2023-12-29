@@ -9,17 +9,16 @@ import {
     StringSelectMenuBuilder,
     ActionRowBuilder,
     SlashCommandBuilder,
-    GuildMember, CommandInteractionOptionResolver
+    GuildMember, CommandInteractionOptionResolver, SlashCommandSubcommandBuilder
 } from "discord.js";
 import RoleSystem from "../shared";
 import EmbedSystem from "../../embed/shared";
 
 module.exports = {
-    enabled: false,
-    data: RoleSystem.slashcommand
-        .addSubcommand(subcommand => subcommand
-            .setName("embed")
-            .setDescription("Sende das Rollenverwaltungsembed.")),
+    command: RoleSystem.slashcommand,
+    subCommand: new SlashCommandSubcommandBuilder()
+        .setName("embed")
+        .setDescription("Sende das Rollenverwaltungsembed."),
     async execute(interaction: CommandInteraction) {
         const options = interaction.options as CommandInteractionOptionResolver;
 

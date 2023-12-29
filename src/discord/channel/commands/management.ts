@@ -4,17 +4,22 @@ import {
     CommandInteraction,
     EmbedBuilder,
     ButtonBuilder,
-    ButtonStyle, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ActionRowBuilder, SlashCommandBuilder
+    ButtonStyle,
+    StringSelectMenuOptionBuilder,
+    StringSelectMenuBuilder,
+    ActionRowBuilder,
+    SlashCommandBuilder,
+    SlashCommandSubcommandBuilder
 } from "discord.js";
+import RoleSystem from "../../roles/shared";
 
 module.exports = {
-    enabled: false,
-    data: new SlashCommandBuilder()
+    command: new SlashCommandBuilder()
         .setName('channel')
-        .setDescription('Channel Commands')
-        .addSubcommand(subcommand => subcommand
-            .setName("embed")
-            .setDescription("Sende das Kanalverwaltungsembed.")),
+        .setDescription('Channel Commands'),
+    subCommand: new SlashCommandSubcommandBuilder()
+        .setName("embed")
+        .setDescription("Sende das Kanalverwaltungsembed."),
     async execute(interaction: CommandInteraction) {
         let select_options: StringSelectMenuOptionBuilder[] = [];
 

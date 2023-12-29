@@ -125,27 +125,6 @@ class DiscordBot {
                     await subCommand.execute(interaction);
                 }
             }
-
-            await interaction.reply({
-                content: "Acknowledged.",
-                ephemeral: true
-            })
-            // const command = this.Client.commands.get(interaction.commandName);
-            // if (!command) {
-            //     logger.error(`No command matching ${interaction.commandName} was found.`); return
-            // }
-
-            // const options = interaction.options as CommandInteractionOptionResolver;
-            // if (options.getSubcommand()) {
-            //     const subcommand = command.getSubcommand();
-            // }
-
-            // try {
-            //     await command.execute(interaction);
-            // } catch (error) {
-            //     logger.error(`Error executing ${interaction.commandName}`);
-            //     logger.error(error);
-            // }
         });
     }
 
