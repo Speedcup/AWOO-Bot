@@ -110,8 +110,7 @@ class DiscordBot {
             if (!command) { return await send_error(); }
 
             const options = interaction.options as CommandInteractionOptionResolver;
-
-            if (options.getSubcommand()) {
+            if (options.getSubcommand(false)) {
                 if (options.getSubcommandGroup()) {
                     const subCommandGroup = command.options.find((subCommandGroup: SlashCommandSubcommandGroupBuilder) => subCommandGroup.name === options.getSubcommandGroup());
                     if (!subCommandGroup) { return await send_error(); }
@@ -126,6 +125,8 @@ class DiscordBot {
 
                     await subCommand.execute(interaction);
                 }
+            } else {
+                await command.execute(interaction);
             }
         });
     }
@@ -172,6 +173,9 @@ class DiscordBot {
             } else {
                 commandInteraction.addSubcommand(command.subCommand)
             }
+        } else {
+            // @ts-ignore
+            commandInteraction.execute = command.execute;
         }
 
         // Analyse the command type.
