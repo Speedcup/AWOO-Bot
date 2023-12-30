@@ -122,6 +122,7 @@ export default class RoleSystem {
         }
         */
         const emoji_trash = discord_bot.Client.emojis.cache.get("1184888993259724810");
+        const emoji_info = discord_bot.Client.emojis.cache.get("1190448412705968289");
         const star_emoji = discord_bot.Client.emojis.cache.get("1186289987348598784");
         const magicwand_emoji = discord_bot.Client.emojis.cache.get("1186303818527424583");
 
@@ -148,18 +149,24 @@ export default class RoleSystem {
                 new EmbedBuilder()
                     .setTitle(`【${star_emoji}】━━━━━━━━▶ Rollen System ◀━━━━━━━━【${star_emoji}】`)
                     .setDescription(
-                        "> **Was ist das Rollensystem?**\n" +
-                        "↬ Das System gibt dir die Möglichkeit aus dem Dropdown verschiedene Spiele auszuwählen, welche du derzeit aktiv spielst.\n" +
-                        "↬ Das System soll verhindern, dass der Discord überladen wirkt und du auch wirklich nur das siehst, was dich interessiert.\n\n" +
-                        "> **Was bringt mir das?**\n" +
-                        "↬ Du erhältst Benachrichtigung bezüglich der Spielersuche.\n" +
-                        "↬ Du erhältst Zugriff auf die für das Spiel vorgesehenen Bereiche.\n" +
-                        "↬ Andere Mitglieder sehen, dass du das Spiel auch spielst.\n\n" +
-                        "> **Ich möchte ein Spiel entfernen**\n" +
-                        "↬ Wähle die Rolle einfach erneut aus oder drücke auf Zurücksetzen um alle Spiele wieder zu entfernen.\n\n" +
-                        "> **Ich habe eine Rolle ausgewählt, und sehe trotzdem nichts neues?**\n" +
-                        "↬ Es ist Möglich, dass das Spiel nur als eine Symbolisierung für andere Mitglieder fungiert, da noch kein Bedarf an einem eigenen Bereich besteht.\n" +
-                        "↬ Bei Bedarf werden weitere Bereiche für bestimmte Spiele eingerichtet."
+                        `> **Was ist das Rollensystem?**
+                        ↬ Das System gibt dir die Möglichkeit aus dem Dropdown verschiedene Spiele auszuwählen, welche du derzeit aktiv spielst.
+                        ↬ Das System soll verhindern, dass der Discord überladen wirkt und du auch wirklich nur das siehst, was dich interessiert.\n
+                        > **Was bringt mir das?**
+                        ↬ Du erhältst Benachrichtigung bezüglich der Spielersuche.
+                        ↬ Du erhältst Zugriff auf die für das Spiel vorgesehenen Bereiche.
+                        ↬ Andere Mitglieder sehen, dass du das Spiel auch spielst.\n
+                        > **Ich möchte ein Spiel entfernen**
+                        ↬ Wähle die Rolle einfach erneut aus oder drücke auf Zurücksetzen um alle Spiele wieder zu entfernen.\n
+                        > **Ich habe eine Rolle ausgewählt, und sehe trotzdem nichts neues?**
+                        ↬ Es ist Möglich, dass das Spiel nur als eine Symbolisierung für andere Mitglieder fungiert, da noch kein Bedarf an einem eigenen Bereich besteht.
+                        ↬ Bei Bedarf werden weitere Bereiche für bestimmte Spiele eingerichtet.\n
+                        > ${emoji_info} **Aktuelle Auswahl**
+                        ↬ Zeigt dir deine aktuelle Auswahl an Rollen.\n
+                        > ${magicwand_emoji} **Alle Auswählen**
+                        ↬ Dir werden alle Rollen hinzugefügt.\n
+                        > ${emoji_trash} **Alle Abwählen**
+                        ↬ Dir werden alle Rollen entfernt.`
                     )
                     // .setFooter({
                     //     text: "Wenn du eine Rolle entfernen möchtest, wähle die Rolle einfach erneut aus oder drücke auf Zurücksetzen um alle vergebenen Rollen zu entfernen."
@@ -169,13 +176,19 @@ export default class RoleSystem {
                 new ActionRowBuilder<ButtonBuilder>()
                     .addComponents(
                         new ButtonBuilder()
-                            .setLabel("Alle Hinzufügen")
+                            // .setLabel("Aktuelle Auswahl")
                             .setStyle(ButtonStyle.Primary)
+                            .setEmoji(emoji_info.id)
+                            .setCustomId("role_information"),
+
+                        new ButtonBuilder()
+                            // .setLabel("Alle Auswählen")
+                            .setStyle(ButtonStyle.Secondary)
                             .setEmoji(magicwand_emoji.id)
                             .setCustomId("role_selection_all"),
 
                         new ButtonBuilder()
-                            .setLabel("Zurücksetzen")
+                            // .setLabel("Alle Abwählen")
                             .setStyle(ButtonStyle.Secondary)
                             .setEmoji(emoji_trash.id)
                             .setCustomId("role_selection_reset"),
