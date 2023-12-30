@@ -19,6 +19,7 @@ import {
 } from "discord.js";
 import { MapClass, map_cache } from "./valorant/content/map";
 import {Cache} from "./utils/globalcache";
+import Emojis from "./utils/emoji";
 
 export { DiscordBot, discord_bot };
 
@@ -74,6 +75,7 @@ class DiscordBot {
                 //     { body: [] },
                 // )
 
+                // Load and post commands to discord.
                 const commands: JSON[] = [];
                 this.Client.commands.map((command: any) => {
                     commands.push(command.toJSON());
@@ -223,7 +225,7 @@ class DiscordBot {
                             this.Client.on(event.name, (...args: any) => event.execute(...args));
                         }
 
-                        // logger.info(`Loaded event => ${eventFile}/${event.name}`);
+                        logger.info(`Loaded event => ${eventFile}/${event.name}`);
                     } else {
                         logger.warn(`Could not load event => ${eventFile}/${event.name} | (missing data structures)`);
                     }

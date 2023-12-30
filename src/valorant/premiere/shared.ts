@@ -12,6 +12,7 @@ import {discord_bot} from "../../index";
 import {agent_cache} from "../content";
 import PageSelection from "../../utils/pagination";
 import logger from "../../logger";
+import Emojis from "../../utils/emoji";
 
 export {
     WHITELIST,
@@ -32,10 +33,10 @@ const GenerateEventEmbed = async (event: Premiere_ScheduledEvent): Promise<Embed
     database.release();
 
     // Emojis
-    const emoji_correct = discord_bot.Client.emojis.cache.get("1184888948091256932");
-    const emoji_wrong = discord_bot.Client.emojis.cache.get("1184888956479873127");
-    const emoji_clock = discord_bot.Client.emojis.cache.get("1184903913036595262");
-    const emoji_switch = discord_bot.Client.emojis.cache.get("1184968671345520690");
+    const emoji_correct = Emojis.get_emoji("correct");
+    const emoji_wrong = Emojis.get_emoji("wrong");
+    const emoji_clock = Emojis.get_emoji("reminder");
+    const emoji_switch = Emojis.get_emoji("switch");
 
     let description: string = "";
     for (const member of members.rows) {
@@ -101,10 +102,10 @@ const GenerateEventEmbeds = async (limit: number = 2): Promise<EmbedBuilder[]> =
 
 const GenerateEventComponents = async (): Promise<(ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>)[]> => {
     // Emojis
-    const emoji_correct = discord_bot.Client.emojis.cache.get("1184888948091256932");
-    const emoji_wrong = discord_bot.Client.emojis.cache.get("1184888956479873127");
-    const emoji_trash = discord_bot.Client.emojis.cache.get("1184888993259724810");
-    const emoji_reminder = discord_bot.Client.emojis.cache.get("1184892183900332072");
+    const emoji_correct = Emojis.get_emoji("correct");
+    const emoji_wrong = Emojis.get_emoji("wrong");
+    const emoji_trash = Emojis.get_emoji("trash");
+    const emoji_reminder = Emojis.get_emoji("reminder");
 
     const button_components: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>({
         components: [

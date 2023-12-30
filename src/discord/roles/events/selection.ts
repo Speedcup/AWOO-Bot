@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 import RoleSystem from "../shared";
 import {discord_bot} from "../../../index";
+import Emojis from "../../../utils/emoji";
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -19,15 +20,15 @@ module.exports = {
                 if (member) {
                     let name: string = "";
 
-                    const emoji_correct = discord_bot.Client.emojis.cache.get("1184888948091256932");
-                    const emoji_wrong = discord_bot.Client.emojis.cache.get("1184888956479873127");
+                    const emoji_correct = Emojis.get_emoji("correct");
+                    const emoji_wrong = Emojis.get_emoji("wrong");
 
                     switch (interaction.customId) {
                         case "role_selection":
                             const role_id = interaction.isStringSelectMenu() ? interaction.values[0] : ""
                             const role = interaction.guild.roles.cache.get(role_id);
-                            const emoji_arrow_add = discord_bot.Client.emojis.cache.get("1190387203285733546");
-                            const emoji_arrow_remove = discord_bot.Client.emojis.cache.get("1190387590168334406");
+                            const emoji_arrow_add = Emojis.get_emoji("arrow_add");
+                            const emoji_arrow_remove = Emojis.get_emoji("arrow_remove");
 
                             if (role) {
                                 const has_role: boolean = member.roles.cache.has(role.id)

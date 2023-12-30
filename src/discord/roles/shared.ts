@@ -10,6 +10,7 @@ import {
     Role, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder
 } from "discord.js";
 import { discord_bot } from "../../index";
+import Emojis from "../../utils/emoji";
 
 /* IDEA / TODO
 *   Maybe not save the role as referencce, so we cache it every time we are using it, so we have the most recent updated value.
@@ -121,10 +122,11 @@ export default class RoleSystem {
             )
         }
         */
-        const emoji_trash = discord_bot.Client.emojis.cache.get("1184888993259724810");
-        const emoji_info = discord_bot.Client.emojis.cache.get("1190448412705968289");
-        const star_emoji = discord_bot.Client.emojis.cache.get("1186289987348598784");
-        const magicwand_emoji = discord_bot.Client.emojis.cache.get("1186303818527424583");
+
+        const emoji_info = Emojis.get_emoji("info")
+        const emoji_trash = Emojis.get_emoji("trash")
+        const star_emoji = Emojis.get_emoji("star")
+        const magicwand_emoji = Emojis.get_emoji("magicwand")
 
         const options: StringSelectMenuOptionBuilder[] = []
         for (const [key, data] of this.get_cache()) {
