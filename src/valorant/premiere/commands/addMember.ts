@@ -28,6 +28,7 @@ module.exports = {
                 .setName('bench')
                 .setDescription('Is the player a Bench Player?')
         ),
+    privileged: true,
     async execute(interaction: CommandInteraction) {
         if (!WHITELIST.includes(interaction.user.id)) return;
 

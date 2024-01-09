@@ -19,6 +19,7 @@ module.exports = {
     subCommand: new SlashCommandSubcommandBuilder()
         .setName("embed")
         .setDescription("Sende das Rollenverwaltungsembed."),
+    privileged: true,
     async execute(interaction: CommandInteraction) {
         const options = interaction.options as CommandInteractionOptionResolver;
 

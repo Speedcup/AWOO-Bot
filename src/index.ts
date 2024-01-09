@@ -12,14 +12,10 @@ import {
     Collection,
     CommandInteraction,
     CommandInteractionOptionResolver,
-    Embed,
-    Guild,
-    Message,
     SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandSubcommandGroupBuilder
 } from "discord.js";
 import { MapClass, map_cache } from "./valorant/content/map";
-import {Cache} from "./utils/globalcache";
-import Emojis from "./utils/emoji";
+import {Embed_MissingPermissions, IsSPEEDCUP} from "./discord/shared";
 
 export { DiscordBot, discord_bot };
 
@@ -109,6 +105,7 @@ class DiscordBot {
             const command = this.Client.commands.get(interaction.commandName);
             if (!command) { return await send_error(); }
 
+            // TODO => Instead of using "privileged" as a boolean var, use a access or permissions func to determine whether the user has access to this command or not.
             const options = interaction.options as CommandInteractionOptionResolver;
             if (options.getSubcommand(false)) {
                 if (options.getSubcommandGroup()) {
@@ -118,15 +115,36 @@ class DiscordBot {
                     const subCommand = subCommandGroup.options.find((subCommand: SlashCommandSubcommandBuilder) => subCommand.name === options.getSubcommand());
                     if (!subCommand) { return await send_error(); }
 
-                    await subCommand.execute(interaction);
+                    if (!subCommand.privileged || IsSPEEDCUP(interaction.user)) {
+                        await subCommand.execute(interaction);
+                    } else {
+                        await interaction.reply({
+                            embeds: [ Embed_MissingPermissions() ],
+                            ephemeral: true
+                        })
+                    }
                 } else {
                     const subCommand = command.options.find((subCommand: SlashCommandSubcommandBuilder) => subCommand.name === options.getSubcommand());
                     if (!subCommand) { return await send_error(); }
 
-                    await subCommand.execute(interaction);
+                    if (!subCommand.privileged || IsSPEEDCUP(interaction.user)) {
+                        await subCommand.execute(interaction);
+                    } else {
+                        await interaction.reply({
+                            embeds: [ Embed_MissingPermissions() ],
+                            ephemeral: true
+                        })
+                    }
                 }
             } else {
-                await command.execute(interaction);
+                if (!command.privileged || IsSPEEDCUP(interaction.user)) {
+                    await command.execute(interaction);
+                } else {
+                    await interaction.reply({
+                        embeds: [ Embed_MissingPermissions() ],
+                        ephemeral: true
+                    })
+                }
             }
         });
     }
@@ -166,6 +184,7 @@ class DiscordBot {
 
         if (command.subCommand) {
             command.subCommand.execute = command.execute;
+            command.subCommand.privileged = command.privileged;
 
             if (command.subCommandGroup) {
                 command.subCommandGroup.addSubcommand(command.subCommand);
@@ -176,6 +195,8 @@ class DiscordBot {
         } else {
             // @ts-ignore
             commandInteraction.execute = command.execute;
+            // @ts-ignore
+            commandInteraction.privileged = command.privileged;
         }
 
         // Analyse the command type.

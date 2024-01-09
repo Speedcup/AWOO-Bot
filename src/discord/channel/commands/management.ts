@@ -20,6 +20,7 @@ module.exports = {
     subCommand: new SlashCommandSubcommandBuilder()
         .setName("embed")
         .setDescription("Sende das Kanalverwaltungsembed."),
+    privileged: true,
     async execute(interaction: CommandInteraction) {
         let select_options: StringSelectMenuOptionBuilder[] = [];
 

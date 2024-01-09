@@ -25,6 +25,7 @@ module.exports = {
                 .setDescription("Das Emoji welche die Rolle repräsentiert. (Optional)")
                 .setRequired(false)
         ),
+    privileged: true,
     async execute(interaction: CommandInteraction) {
         if (interaction.user.id !== "406420078549270539") {
             return await interaction.reply({

@@ -11,6 +11,7 @@ module.exports = {
     subCommand: new SlashCommandSubcommandBuilder()
             .setName("embed")
             .setDescription("Sende das Premiere Embed."),
+    permissions: true,
     async execute(interaction: CommandInteraction) {
         const pageSelection: PageSelection = await GenerateEventPageSelection();
         await pageSelection.send(interaction);
