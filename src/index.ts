@@ -244,9 +244,9 @@ class DiscordBot {
 
                     if ('name' in event && 'execute' in event) {
                         if (event.once) {
-                            this.Client.once(event.name, (...args: any) => event.execute(...args));
+                            this.Client.once(event.name, async (...args: any) => await event.execute(...args));
                         } else {
-                            this.Client.on(event.name, (...args: any) => event.execute(...args));
+                            this.Client.on(event.name, async (...args: any) => await event.execute(...args));
                         }
 
                         logger.info(`Loaded event => ${eventFile}/${event.name}`);
