@@ -1,10 +1,16 @@
 /* Send Premiere Embed */
 
 import {
-    CommandInteraction, SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandSubcommandGroupBuilder,
+    CommandInteraction,
+    GuildMember,
+    SlashCommandBuilder,
+    SlashCommandSubcommandBuilder,
+    SlashCommandSubcommandGroupBuilder,
+    User,
 } from "discord.js";
 import {WHITELIST} from "../shared";
 import {discord_bot} from "../../../index";
+import {IsSPEEDCUP} from "../../../discord/shared";
 
 // TODO, add member remove option.
 module.exports = {
@@ -28,7 +34,9 @@ module.exports = {
                 .setName('bench')
                 .setDescription('Is the player a Bench Player?')
         ),
-    privileged: true,
+    can_execute: (user: User | GuildMember) => {
+        return IsSPEEDCUP(user);
+    },
     async execute(interaction: CommandInteraction) {
         if (!WHITELIST.includes(interaction.user.id)) return;
 

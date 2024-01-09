@@ -1,8 +1,9 @@
 /* Send Premiere Embed */
 
-import {CommandInteraction, SlashCommandBuilder, SlashCommandSubcommandBuilder} from "discord.js";
+import {CommandInteraction, GuildMember, SlashCommandBuilder, SlashCommandSubcommandBuilder, User} from "discord.js";
 import { GenerateEventPageSelection } from "../shared";
 import PageSelection from "../../../utils/pagination";
+import {IsSPEEDCUP} from "../../../discord/shared";
 
 module.exports = {
     command: new SlashCommandBuilder()
@@ -11,7 +12,9 @@ module.exports = {
     subCommand: new SlashCommandSubcommandBuilder()
             .setName("embed")
             .setDescription("Sende das Premiere Embed."),
-    permissions: true,
+    can_execute: (user: User | GuildMember) => {
+        return IsSPEEDCUP(user);
+    },
     async execute(interaction: CommandInteraction) {
         const pageSelection: PageSelection = await GenerateEventPageSelection();
         await pageSelection.send(interaction);

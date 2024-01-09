@@ -9,9 +9,10 @@ import {
     StringSelectMenuBuilder,
     ActionRowBuilder,
     SlashCommandBuilder,
-    SlashCommandSubcommandBuilder
+    SlashCommandSubcommandBuilder, User, GuildMember
 } from "discord.js";
 import RoleSystem from "../../roles/shared";
+import {IsSPEEDCUP} from "../../shared";
 
 module.exports = {
     command: new SlashCommandBuilder()
@@ -20,7 +21,9 @@ module.exports = {
     subCommand: new SlashCommandSubcommandBuilder()
         .setName("embed")
         .setDescription("Sende das Kanalverwaltungsembed."),
-    privileged: true,
+    can_execute: (user: User | GuildMember) => {
+        return IsSPEEDCUP(user);
+    },
     async execute(interaction: CommandInteraction) {
         let select_options: StringSelectMenuOptionBuilder[] = [];
 

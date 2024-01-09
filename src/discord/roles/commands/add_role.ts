@@ -3,10 +3,11 @@
 import {
     CommandInteraction,
     SlashCommandBuilder,
-    CommandInteractionOptionResolver, Role, SlashCommandSubcommandBuilder
+    CommandInteractionOptionResolver, Role, SlashCommandSubcommandBuilder, User, GuildMember
 } from "discord.js";
 import RoleSystem from "../shared";
 import EmbedSystem from "../../embed/shared";
+import {IsSPEEDCUP} from "../../shared";
 
 module.exports = {
     command: RoleSystem.slashcommand,
@@ -25,7 +26,9 @@ module.exports = {
                 .setDescription("Das Emoji welche die Rolle repräsentiert. (Optional)")
                 .setRequired(false)
         ),
-    privileged: true,
+    can_execute: (user: User | GuildMember) => {
+        return IsSPEEDCUP(user);
+    },
     async execute(interaction: CommandInteraction) {
         if (interaction.user.id !== "406420078549270539") {
             return await interaction.reply({

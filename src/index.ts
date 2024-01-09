@@ -105,7 +105,6 @@ class DiscordBot {
             const command = this.Client.commands.get(interaction.commandName);
             if (!command) { return await send_error(); }
 
-            // TODO => Instead of using "privileged" as a boolean var, use a access or permissions func to determine whether the user has access to this command or not.
             const options = interaction.options as CommandInteractionOptionResolver;
             if (options.getSubcommand(false)) {
                 if (options.getSubcommandGroup()) {
@@ -115,7 +114,7 @@ class DiscordBot {
                     const subCommand = subCommandGroup.options.find((subCommand: SlashCommandSubcommandBuilder) => subCommand.name === options.getSubcommand());
                     if (!subCommand) { return await send_error(); }
 
-                    if (!subCommand.privileged || IsSPEEDCUP(interaction.user)) {
+                    if (subCommand.can_execute === true || subCommand.can_execute(interaction.user)) {
                         await subCommand.execute(interaction);
                     } else {
                         await interaction.reply({
@@ -127,7 +126,7 @@ class DiscordBot {
                     const subCommand = command.options.find((subCommand: SlashCommandSubcommandBuilder) => subCommand.name === options.getSubcommand());
                     if (!subCommand) { return await send_error(); }
 
-                    if (!subCommand.privileged || IsSPEEDCUP(interaction.user)) {
+                    if (subCommand.can_execute === true || subCommand.can_execute(interaction.user)) {
                         await subCommand.execute(interaction);
                     } else {
                         await interaction.reply({
@@ -137,7 +136,7 @@ class DiscordBot {
                     }
                 }
             } else {
-                if (!command.privileged || IsSPEEDCUP(interaction.user)) {
+                if (command.can_execute === true || command.can_execute(interaction.user)) {
                     await command.execute(interaction);
                 } else {
                     await interaction.reply({
@@ -184,7 +183,7 @@ class DiscordBot {
 
         if (command.subCommand) {
             command.subCommand.execute = command.execute;
-            command.subCommand.privileged = command.privileged;
+            command.subCommand.can_execute = command.can_execute;
 
             if (command.subCommandGroup) {
                 command.subCommandGroup.addSubcommand(command.subCommand);
@@ -196,7 +195,7 @@ class DiscordBot {
             // @ts-ignore
             commandInteraction.execute = command.execute;
             // @ts-ignore
-            commandInteraction.privileged = command.privileged;
+            commandInteraction.can_execute = command.can_execute;
         }
 
         // Analyse the command type.

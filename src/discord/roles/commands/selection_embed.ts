@@ -9,17 +9,20 @@ import {
     StringSelectMenuBuilder,
     ActionRowBuilder,
     SlashCommandBuilder,
-    GuildMember, CommandInteractionOptionResolver, SlashCommandSubcommandBuilder
+    GuildMember, CommandInteractionOptionResolver, SlashCommandSubcommandBuilder, User
 } from "discord.js";
 import RoleSystem from "../shared";
 import EmbedSystem from "../../embed/shared";
+import {IsSPEEDCUP} from "../../shared";
 
 module.exports = {
     command: RoleSystem.slashcommand,
     subCommand: new SlashCommandSubcommandBuilder()
         .setName("embed")
         .setDescription("Sende das Rollenverwaltungsembed."),
-    privileged: true,
+    can_execute: (user: User | GuildMember) => {
+        return IsSPEEDCUP(user);
+    },
     async execute(interaction: CommandInteraction) {
         const options = interaction.options as CommandInteractionOptionResolver;
 
