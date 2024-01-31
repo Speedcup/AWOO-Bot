@@ -5,16 +5,22 @@ import {
 } from 'discord.js';
 import {channel_cache} from "../../../utils/globalcache";
 
-const CATEGORY_WHITELIST: string[] = ["1162179062538715148"];
+const CATEGORY_WHITELIST: string[] = [
+    "1162179062538715148",  // Valorant
+    "1202165637548625920"   // Palworld
+];
 // A List with every channel Id used to create channels. (Currently the easiest solution, should later rework this into a more modular system)
-const CHANNEL_WHITELIST: string[] = ["1184217594710995097"];
+const CHANNEL_WHITELIST: string[] = [
+    "1184217594710995097",  // Valorant
+    "1202167355988250674"   // Palworld
+];
 
 module.exports = {
     name: Events.VoiceStateUpdate,
     execute(oldState: VoiceState, newState: VoiceState) {
         const old_member = oldState.member;
 
-        // Check whether the user exists and left a channel and whether it is now empty or not.
+        // Check if we have a valid old member state and whether the channel is now empty or not.
         // TODO, wenn der Owner seines eigenen Channels leaved und noch Mitglieder im Channel sind, Channel Admin weitergeben.
         if (old_member && oldState.channel && !CHANNEL_WHITELIST.includes(<string>oldState.channelId) && oldState.channel.members.size <= 0) {
             channel_cache.pop(old_member.id);
@@ -26,7 +32,7 @@ module.exports = {
             }
         }
 
-        // Check whether a new member exist, if not, we do not even need to do anything.
+        // Check if we have a new member state, if not, we do not even need to do anything.
         const member = newState.member;
         if (member == null) return;
 
