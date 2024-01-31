@@ -98,10 +98,12 @@ export default class RoleSystem {
     }
 
     static async remove_role(role: Role): Promise<void> {
-        const database = await discord_bot.Client.DB.connect();
+        if (RoleSystem.get_cache().get(role.id)) {
+            const database = await discord_bot.Client.DB.connect();
 
-        await database.query(`DELETE FROM roles WHERE id = '${role.id}'`);
-        database.release();
+            await database.query(`DELETE FROM roles WHERE id = '${role.id}'`);
+            database.release();
+        }
     }
 
     static async generate_selection(): Promise<{
