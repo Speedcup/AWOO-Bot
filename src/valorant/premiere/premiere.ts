@@ -131,7 +131,7 @@ class VALORANT_Premiere {
             * The Event plays in our region.
             * It is an upcoming event that has not yet been played.
             */
-            .filter(((event: any) => event.conference === "EU_CENTRAL_EAST" && (Date.parse(event.starts_at)) > (Date.now())))
+            .filter(((event: any) => event.conference === "EU_DACH" && (Date.parse(event.starts_at)) > (Date.now())))
             .map((scheduledEvent: any) => new Premiere_ScheduledEvent(
                 // Save the whole event class so we have a reference
                 this.events ? this.events.find(((event: any) => event.id === scheduledEvent.event_id)) : undefined,
