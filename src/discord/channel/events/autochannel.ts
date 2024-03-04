@@ -6,13 +6,12 @@ import {
 import {channel_cache} from "../../../utils/globalcache";
 
 const CATEGORY_WHITELIST: string[] = [
-    "1162179062538715148",  // Valorant
-    "1202165637548625920"   // Palworld
+    "1214067221022900264"
 ];
+
 // A List with every channel Id used to create channels. (Currently the easiest solution, should later rework this into a more modular system)
 const CHANNEL_WHITELIST: string[] = [
-    "1184217594710995097",  // Valorant
-    "1202167355988250674"   // Palworld
+    "1184217594710995097"
 ];
 
 module.exports = {
