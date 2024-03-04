@@ -11,7 +11,8 @@ module.exports = {
         (async () => {
             const channel = await member.guild.channels.fetch("1162178589022761052") as TextChannel;
 
-            await member.roles.add("1184242513708589066", "1184243632761487428"); // categories.
+            await member.roles.add("1184242513708589066", "Default Roles"); // GAMES.
+            await member.roles.add("1197191080924426370", "Default Roles"); // COLORS.
             await channel.send({
                 embeds: [
                     new EmbedBuilder()
