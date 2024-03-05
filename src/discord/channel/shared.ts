@@ -92,7 +92,7 @@ export default class ChannelManager {
 
         if (!result || result.rowCount <= 0) return false;
 
-        let item = result.rows.first();
+        let item = result.rows[0];
         if (!item) return false;
 
         return item.owner_id == member.id;
