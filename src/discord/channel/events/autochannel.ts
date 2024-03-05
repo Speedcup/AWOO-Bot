@@ -1,34 +1,21 @@
 import {
     Events,
     VoiceState,
-    ChannelType,
+    ChannelType, VoiceChannel,
 } from 'discord.js';
-import {channel_cache} from "../../../utils/globalcache";
-
-const CATEGORY_WHITELIST: string[] = [
-    "1214067221022900264"
-];
-
-// A List with every channel Id used to create channels. (Currently the easiest solution, should later rework this into a more modular system)
-const CHANNEL_WHITELIST: string[] = [
-    "1184217594710995097"
-];
+import ChannelManager from "../shared";
 
 module.exports = {
     name: Events.VoiceStateUpdate,
     execute(oldState: VoiceState, newState: VoiceState) {
         const old_member = oldState.member;
 
-        // Check if we have a valid old member state and whether the channel is now empty or not.
-        // TODO, wenn der Owner seines eigenen Channels leaved und noch Mitglieder im Channel sind, Channel Admin weitergeben.
-        if (old_member && oldState.channel && !CHANNEL_WHITELIST.includes(<string>oldState.channelId) && oldState.channel.members.size <= 0) {
-            channel_cache.pop(old_member.id);
-
-            if (oldState.channel.parentId && CATEGORY_WHITELIST.includes(oldState.channel.parentId)) {
-                (async () => {
-                    oldState.channel?.delete();
-                })();
-            }
+        // TODO: Check whether this channel is in our cache.
+        // - We do not need to validate the category etc, because the cache only contains valid created channels.
+        if (old_member && oldState.channel) {
+            (async () => {
+                await ChannelManager.delete_channel(<VoiceChannel>oldState.channel);
+            })();
         }
 
         // Check if we have a new member state, if not, we do not even need to do anything.
@@ -36,20 +23,10 @@ module.exports = {
         if (member == null) return;
 
         // Check whether the user has joined our creation channel.
-        if (newState.channel && CHANNEL_WHITELIST.includes(<string>newState.channelId)) {
+        if (newState.channel) {
             // Create a new channel
             (async () => {
-                await newState.guild.channels.create({
-                    name: `${member ? member.displayName : 'Unknown'}'s Channel`,
-                    type: ChannelType.GuildVoice,
-                    parent: newState.channel?.parentId
-                }).then(async channel => {
-                    // Update our current channel cache
-                    channel_cache.set(member.id, channel.id);
-
-                    // Move the user to their new channel
-                    await member.voice.setChannel(channel);
-                });
+                await ChannelManager.create_channel(member, <VoiceChannel>newState.channel)
             })();
         }
     },
