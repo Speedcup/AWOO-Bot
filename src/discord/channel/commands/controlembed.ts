@@ -76,6 +76,7 @@ module.exports = {
                         
                         **${emoji_switch} Channel-Owner weitergeben**
                         ↬ Hiermit kannst du deinen Channel-Owner an eine andere Person im Channel weitergeben.
+                        ↬ Tipp: [Hier findest du eine einfachere Methode](https://discord.com/channels/1001550913556729996/1084584333706264636/1214750824694026271)
                     `)
                     .setTimestamp()
             ],
@@ -83,17 +84,17 @@ module.exports = {
                 new ActionRowBuilder<ButtonBuilder>({
                     components: [
                         new ButtonBuilder()
-                            .setCustomId("channel_unlock")
+                            .setCustomId("channel_manage_unlock")
                             .setLabel("Channel Öffnen")
                             .setEmoji(emoji_unlock.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_lock")
+                            .setCustomId("channel_manage_lock")
                             .setLabel("Channel Schließen")
                             .setEmoji(emoji_lock.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_edit")
+                            .setCustomId("channel_manage_edit")
                             .setLabel("Channel Bearbeiten")
                             .setEmoji(emoji_edit.id)
                             .setStyle(ButtonStyle.Secondary)
@@ -102,17 +103,17 @@ module.exports = {
                 new ActionRowBuilder<ButtonBuilder>({
                     components: [
                         new ButtonBuilder()
-                            .setCustomId("channel_kick")
+                            .setCustomId("channel_manage_kick")
                             .setLabel("User Kicken")
                             .setEmoji(emoji_kick.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_ban")
+                            .setCustomId("channel_manage_ban")
                             .setLabel("User Bannen")
                             .setEmoji(emoji_ban.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_unban")
+                            .setCustomId("channel_manage_unban")
                             .setLabel("User Entbannen")
                             .setEmoji(emoji_unban.id)
                             .setStyle(ButtonStyle.Secondary)
@@ -121,17 +122,17 @@ module.exports = {
                 new ActionRowBuilder<ButtonBuilder>({
                     components: [
                         new ButtonBuilder()
-                            .setCustomId("channel_owner")
+                            .setCustomId("channel_manage_owner")
                             .setLabel("Owner anzeigen")
                             .setEmoji(emoji_owner.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_claim")
+                            .setCustomId("channel_manage_claim")
                             .setLabel("Owner claimen")
                             .setEmoji(emoji_claim.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_switch")
+                            .setCustomId("channel_manage_switch")
                             .setLabel("Owner weitergeben")
                             .setEmoji(emoji_switch.id)
                             .setStyle(ButtonStyle.Secondary)

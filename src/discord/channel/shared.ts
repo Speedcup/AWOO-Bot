@@ -9,6 +9,11 @@ type PrivateChannel = {
     blocked_users: Snowflake[]
 }
 
+type ClaimResult = {
+    success: boolean,
+    error: string
+}
+
 export default class ChannelManager {
     static can_create_channel(member: GuildMember, base_channel: VoiceChannel): boolean {
         // Since I am way too lazy rn to program a modular, dynamic category & creation channel whitelist, I will hardcode my single one.
@@ -62,6 +67,8 @@ export default class ChannelManager {
             type: ChannelType.GuildVoice,
             parent: base_channel.parentId
         }).then(async channel => {
+            // If for some reason, the owner still exists, set it empty.
+            await database.query(`UPDATE channels SET owner_id = '' WHERE owner_id = '${member.id}'`);
             await database.query(`INSERT INTO channels (channel_id, owner_id) VALUES ('${channel.id}', '${member.id}')`);
 
             // Move the user to their new channel
@@ -85,16 +92,51 @@ export default class ChannelManager {
         await channel.delete();
     }
 
-    static async is_owner(member: GuildMember, channel: VoiceChannel) {
+    static async get_owner(channel: VoiceChannel) {
         const database = await discord_bot.Client.DB.connect();
         const result = await database.query(`SELECT * FROM channels WHERE channel_id = '${channel.id}'`);
         database.release();
 
-        if (!result || result.rowCount <= 0) return false;
+        if (!result || result.rowCount <= 0) return null;
 
         let item = result.rows[0];
-        if (!item) return false;
+        if (!item) return null;
+        if (item.owner_id == "") return null;
 
-        return item.owner_id == member.id;
+        return await discord_bot.Client.users.fetch(item.owner_id);
+    }
+
+    static async is_owner(member: GuildMember, channel: VoiceChannel) {
+        let owner = await this.get_owner(channel);
+        if (!owner || typeof owner == null) return false;
+
+        return owner.id == member.id;
+    }
+
+    static async claim_channel(member: GuildMember, channel: VoiceChannel): Promise<{success: boolean, error?: string}> {
+        if (member.voice.channel?.id != channel.id) {
+            return {success: false, error: `Du befindest dich nicht in dem Channel welchen du versuchst zu claimen.`}
+        }
+
+        let owner = await this.get_owner(channel);
+        if (owner) {
+            if (owner.id == member.id) {
+                return {success: false, error: "Dir gehört der Channel bereits."}
+            }
+
+            return {success: false, error: `Du kannst den Channel nicht claimen da dieser im Besitz von ${owner} ist.`}
+        }
+
+        const database = await discord_bot.Client.DB.connect();
+        const result = await database.query(`SELECT * WHERE channel_id = '${channel.id}'`);
+        if (!result || result.rowCount <= 0) {
+            database.release();
+            return {success: false, error: `Der Channel ist nicht claimbar.`}
+        }
+
+        await database.query(`UPDATE channels SET owner_id = '${member.id}' WHERE channel_id = '${channel.id}'`);
+        database.release();
+
+        return {success: true}
     }
 }
