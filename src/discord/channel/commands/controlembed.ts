@@ -84,17 +84,17 @@ module.exports = {
                 new ActionRowBuilder<ButtonBuilder>({
                     components: [
                         new ButtonBuilder()
-                            .setCustomId("channel_manage_unlock")
+                            .setCustomId("channel_button_unlock")
                             .setLabel("Channel Öffnen")
                             .setEmoji(emoji_unlock.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_manage_lock")
+                            .setCustomId("channel_button_lock")
                             .setLabel("Channel Schließen")
                             .setEmoji(emoji_lock.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_manage_edit")
+                            .setCustomId("channel_button_edit")
                             .setLabel("Channel Bearbeiten")
                             .setEmoji(emoji_edit.id)
                             .setStyle(ButtonStyle.Secondary)
@@ -103,17 +103,17 @@ module.exports = {
                 new ActionRowBuilder<ButtonBuilder>({
                     components: [
                         new ButtonBuilder()
-                            .setCustomId("channel_manage_kick")
+                            .setCustomId("channel_button_kick")
                             .setLabel("User Kicken")
                             .setEmoji(emoji_kick.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_manage_ban")
+                            .setCustomId("channel_button_ban")
                             .setLabel("User Bannen")
                             .setEmoji(emoji_ban.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_manage_unban")
+                            .setCustomId("channel_button_unban")
                             .setLabel("User Entbannen")
                             .setEmoji(emoji_unban.id)
                             .setStyle(ButtonStyle.Secondary)
@@ -122,17 +122,17 @@ module.exports = {
                 new ActionRowBuilder<ButtonBuilder>({
                     components: [
                         new ButtonBuilder()
-                            .setCustomId("channel_manage_owner")
+                            .setCustomId("channel_button_owner")
                             .setLabel("Owner anzeigen")
                             .setEmoji(emoji_owner.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_manage_claim")
+                            .setCustomId("channel_button_claim")
                             .setLabel("Owner claimen")
                             .setEmoji(emoji_claim.id)
                             .setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder()
-                            .setCustomId("channel_manage_switch")
+                            .setCustomId("channel_button_switch")
                             .setLabel("Owner weitergeben")
                             .setEmoji(emoji_switch.id)
                             .setStyle(ButtonStyle.Secondary)

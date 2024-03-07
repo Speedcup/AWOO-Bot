@@ -89,7 +89,8 @@ export default class ChannelManager {
         let results = await database.query(`DELETE FROM channels WHERE channel_id = '${channel.id}'`);
         database.release();
 
-        await channel.delete();
+        await channel.delete()
+            .catch(console.error);
     }
 
     static async get_owner(channel: VoiceChannel) {

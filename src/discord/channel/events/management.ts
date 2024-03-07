@@ -10,7 +10,7 @@ import Emojis from "../../../utils/emoji";
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction: any) {
-        if (interaction.isButton() && interaction.customId.startsWith("channel_manage_")) {
+        if (interaction.isButton() && interaction.customId.startsWith("channel_button_")) {
             const member = await interaction.guild?.members.fetch(interaction.user.id);
             if (!member) return;
 
@@ -33,7 +33,7 @@ module.exports = {
                 return;
             }
 
-            let event = interaction.customId.split("channel_manage_")[1]
+            let event = interaction.customId.split("channel_button_")[1]
             switch (event) {
                 case "unlock":
                     await channel.permissionOverwrites.set([
@@ -64,8 +64,67 @@ module.exports = {
 
                     break;
                 case "edit":
+                    let currentLimit = channel.maxUsers;
+                    if (!currentLimit) currentLimit = 0;
+
+                    const modal = new ModalBuilder()
+                        .setCustomId('channel_action_edit')
+                        .setTitle('Channel Bearbeiten')
+                        .addComponents(
+                            new ActionRowBuilder<TextInputBuilder>({
+                                components: [
+                                    new TextInputBuilder()
+                                        .setCustomId("modal_channel_name_entry")
+                                        .setLabel("Kanalname")
+                                        .setValue(channel.name)
+                                        .setStyle(TextInputStyle.Short)
+                                        .setMinLength(3)
+                                        .setMaxLength(20)
+                                        .setRequired(false)
+                                ]
+                            }),
+                            new ActionRowBuilder<TextInputBuilder>({
+                                components: [
+                                    new TextInputBuilder()
+                                        .setCustomId("modal_channel_limit_entry")
+                                        .setLabel("Limit")
+                                        .setValue(String(currentLimit))
+                                        .setStyle(TextInputStyle.Short)
+                                        .setRequired(true)
+                                ]
+                            })
+                        );
+
+                    await interaction.showModal(modal);
+
                     break;
                 case "kick":
+                    if (channel.members.length <= 1) {
+                        await interaction.reply({
+                            content:
+                                `**${Emojis.get_emoji("wrong")} - Zu wenig Mitglieder.**\n` +
+                                `↬ Der Channel benötigt mindestens 2 Mitglieder um jemanden kicken zu können.`,
+                            ephemeral: true
+                        });
+                    } else {
+                        const userSelect = new UserSelectMenuBuilder()
+                            .setCustomId('channel_action_kick')
+                            .setPlaceholder('Wähle einen User ...')
+
+                        await interaction.reply({
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle("Channel - Kick")
+                                    .setDescription("Bitte wähle aus dem unteren Dropdown Menü den User welchen du kicken möchtest.")
+                            ],
+                            components: [
+                                new ActionRowBuilder()
+                                    .addComponents(userSelect)
+                            ],
+                            ephemeral: true
+                        });
+                    }
+
                     break;
                 case "ban":
                     break;
@@ -121,11 +180,11 @@ module.exports = {
                             ephemeral: true
                         });
                     } else {
-                        // TODO! We stopped here.
                         const userSelect = new UserSelectMenuBuilder()
                             .setCustomId('channel_switch')
                             .setPlaceholder('Wähle einen neuen Owner ...')
-                            .setDefaultUsers(["406420078549270539"]); // ...channel.members.map((member: GuildMember) => { return member.id })
+                            // So this seems useless since it is not working, I think discord does not support restricting the user selection.
+                            // .setDefaultUsers(["406420078549270539"]); // ...channel.members.map((member: GuildMember) => { return member.id })
 
                         await interaction.reply({
                             embeds: [
