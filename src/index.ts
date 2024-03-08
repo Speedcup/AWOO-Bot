@@ -11,7 +11,7 @@ import { Pool } from 'pg';
 import {
     Collection,
     CommandInteraction,
-    CommandInteractionOptionResolver,
+    CommandInteractionOptionResolver, ContextMenuCommandBuilder,
     SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandSubcommandGroupBuilder
 } from "discord.js";
 import { MapClass, map_cache } from "./valorant/content/map";
@@ -58,6 +58,7 @@ class DiscordBot {
 
     constructor() {
         this.Client.commands = new Collection();
+        this.Client.context_menu_commands = new Collection();
 
         this.Client.on(Events.Debug, (m: string) => logger.debug(m));
         this.Client.on(Events.Warn, (m: string) => logger.warn(m));
@@ -73,7 +74,12 @@ class DiscordBot {
 
                 // Load and post commands to discord.
                 const commands: JSON[] = [];
+
                 this.Client.commands.map((command: any) => {
+                    commands.push(command.toJSON());
+                })
+
+                this.Client.context_menu_commands.map((command: any) => {
                     commands.push(command.toJSON());
                 })
 
@@ -90,6 +96,7 @@ class DiscordBot {
             logger.info(`Ready! Logged in as ${client.user.tag}`);
         }))
 
+        // Handle Slash Commands
         this.Client.on(Events.InteractionCreate, async (interaction: CommandInteraction) => {
             if (!interaction.isChatInputCommand()) return;
 
@@ -145,6 +152,25 @@ class DiscordBot {
                     })
                 }
             }
+        });
+
+        // Handle Slash Commands
+        this.Client.on(Events.InteractionCreate, async (interaction: CommandInteraction) => {
+            if (!interaction.isContextMenuCommand()) return;
+
+            const send_error = async () => {
+                logger.warn("Unknown command got executed.");
+
+                await interaction.reply({
+                    content: "No command has been found.",
+                    ephemeral: true
+                });
+            };
+
+            const command = this.Client.context_menu_commands.get(interaction.commandName);
+            if (!command) { return await send_error(); }
+
+            await command.execute(interaction);
         });
     }
 
@@ -260,6 +286,40 @@ class DiscordBot {
         // logger.info("Loaded events!");
     }
 
+    private async loadContext(dir: string = "discord"): Promise<void> {
+        const modulePath = path.join(__dirname, dir);
+        const moduleFolders = fs.readdirSync(modulePath);
+
+        for (const moduleFolder of moduleFolders) {
+            const contextPath = path.join(modulePath, moduleFolder + "/context");
+
+            if (fs.existsSync(contextPath)) {
+                const contextFiles = fs.readdirSync(contextPath);
+                for (const contextFile of contextFiles) {
+                    const filePath = path.join(contextPath, contextFile);
+                    const context = require(filePath);
+
+                    if (context.enabled === false) {
+                        logger.warn(`Disabled context => ${contextFile}/${context.data?.name}`);
+                        continue
+                    }
+
+                    if ('data' in context && 'execute' in context) {
+                        let contextInteraction: ContextMenuCommandBuilder = context.data;
+                        // @ts-ignore
+                        contextInteraction.execute = context.execute;
+
+                        this.Client.context_menu_commands.set(context.data.name, contextInteraction);
+
+                        logger.info(`Loaded context command => ${contextFile}/${context.data?.name}`);
+                    } else {
+                        logger.warn(`Could not load context => ${contextFile}/${context.data?.name} | (missing data structures)`);
+                    }
+                }
+            }
+        }
+    }
+
     private async initialize_caches(): Promise<void> {
         await AgentClass.fetchAgents().then((agents) => {
             agent_cache.update(agents);
@@ -278,9 +338,9 @@ class DiscordBot {
             host: process.env.DATABASE_HOST,
             database: process.env.DATABASE_DB,
             password: process.env.DATABASE_PASSWORD,
-            port: 5432, // Standard-PostgreSQL-Port
-            max: 20,    // Maximale Anzahl der Verbindungen im Pool
-            idleTimeoutMillis: 30000, // Timeout für inaktive Verbindungen
+            port: 5432,
+            max: 20,
+            idleTimeoutMillis: 30000,
         });
 
         logger.debug("Database initialized.")
@@ -300,6 +360,9 @@ class DiscordBot {
         // Initialize our commands at last.
         await this.loadCommands();
         await this.loadCommands("valorant");
+
+        await this.loadContext();
+        await this.loadContext("valorant");
     }
 
     public async start() {
