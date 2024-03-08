@@ -5,26 +5,20 @@ import {
     EmbedBuilder,
     ButtonBuilder,
     ButtonStyle,
-    StringSelectMenuOptionBuilder,
-    StringSelectMenuBuilder,
     ActionRowBuilder,
     SlashCommandBuilder,
     SlashCommandSubcommandBuilder, User, GuildMember
 } from "discord.js";
-import RoleSystem from "../../roles/shared";
 import {IsSPEEDCUP} from "../../shared";
 import Emojis from "../../../utils/emoji";
+import { channel_command } from "../const";
 
 module.exports = {
-    command: new SlashCommandBuilder()
-        .setName('channel')
-        .setDescription('Channel Commands'),
+    command: channel_command,
     subCommand: new SlashCommandSubcommandBuilder()
         .setName("embed")
         .setDescription("Sende das Kanalverwaltungsembed."),
-    can_execute: (user: User | GuildMember) => {
-        return IsSPEEDCUP(user);
-    },
+    can_execute: (user: User | GuildMember) => IsSPEEDCUP(user),
     async execute(interaction: CommandInteraction) {
         const emoji_unlock = Emojis.get_emoji("unlock");
         const emoji_lock = Emojis.get_emoji("lock");
@@ -47,9 +41,12 @@ module.exports = {
                         
                         **${emoji_unlock} Channel Öffnen**
                         ↬ Öffnet den Channel.
+                        ↬ Der Channel ist öffentlich und von jedem betretbar.
+                        ↬ Ausgenommen hiervon sind von dir gebannte User.
                         
                         **${emoji_lock} Channel Schließen**
                         ↬ Schließt den Channel.
+                        ↬ Der Channel ist von keinem mehr nachträglich betretbar.
                         
                         **${emoji_edit} Channel Bearbeiten**
                         ↬ Öffnet ein Menü zum Bearbeiten des Channels.
@@ -57,13 +54,16 @@ module.exports = {
                         **${emoji_kick} User Kicken**
                         ↬ Kickt einen Nutzer aus dem Channel.
                         ↬ Gekickte Nutzer können jederzeit den Channel neu betreten.
+                        ↬ Tipp: [Hier findest du eine einfachere Methode](https://discord.com/channels/1134978383336456323/1215702069684600862/1215703987685171280)
                         
                         **${emoji_ban} User Bannen**
                         ↬ Bannt einen Nutzer aus dem Channel.
                         ↬ Gebannte Nutzer können den Channel nicht mehr betreten.
+                        ↬ Tipp: [Hier findest du eine einfachere Methode](https://discord.com/channels/1134978383336456323/1215702069684600862/1215703987685171280)
                         
                         **${emoji_unban} User Entbannen**
                         ↬ Entbannt einen Nutzer, sodass er dem Channel wieder beitreten kann.
+                        ↬ Tipp: [Hier findest du eine einfachere Methode](https://discord.com/channels/1134978383336456323/1215702069684600862/1215703987685171280)
                         
                         **${emoji_invite} Channel Invite Link**
                         ↬ Generiert einen Link um andere Nutzer zu diesem Channel einzuladen.
@@ -76,7 +76,6 @@ module.exports = {
                         
                         **${emoji_switch} Channel-Owner weitergeben**
                         ↬ Hiermit kannst du deinen Channel-Owner an eine andere Person im Channel weitergeben.
-                        ↬ Tipp: [Hier findest du eine einfachere Methode](https://discord.com/channels/1001550913556729996/1084584333706264636/1214750824694026271)
                     `)
                     .setTimestamp()
             ],

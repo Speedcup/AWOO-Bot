@@ -1,37 +1,33 @@
 import {
-    ActionRowBuilder, EmbedBuilder,
-    Events, GuildMember, ModalBuilder, PermissionsBitField, TextInputBuilder, TextInputStyle, UserSelectMenuBuilder
+    ActionRowBuilder,
+    Events,
+    ModalBuilder,
+    PermissionsBitField,
+    StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
+    TextInputBuilder,
+    TextInputStyle,
+    UserSelectMenuBuilder
 } from 'discord.js';
-import {channel_cache} from "../../../utils/globalcache";
 import ChannelManager from "../shared";
-import {Channel} from "diagnostics_channel";
-import Emojis from "../../../utils/emoji";
+import EmbedBuilder from "../../../utils/embed";
 
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction: any) {
         if (interaction.isButton() && interaction.customId.startsWith("channel_button_")) {
+            const {success, error} = await ChannelManager.is_valid_request(interaction);
+            if (!success) return await interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setTitle("Channel")
+                        .setSubTitle("Fehler")
+                        .setDescription(error ? error : "➥ Unbekannter Fehler.")
+                ],
+                ephemeral: true
+            })
+
             const member = await interaction.guild?.members.fetch(interaction.user.id);
-            if (!member) return;
-
             let channel = member.voice.channel;
-            if (!channel) {
-                await interaction.reply({
-                    content: "Du bist derzeit in keinem Channel.",
-                    ephemeral: true
-                });
-
-                return;
-            }
-
-            if (!await ChannelManager.is_owner(member, channel)) {
-                await interaction.reply({
-                    content: "Du bist nicht der Owner des Channels.",
-                    ephemeral: true
-                });
-
-                return;
-            }
 
             let event = interaction.customId.split("channel_button_")[1]
             switch (event) {
@@ -44,7 +40,16 @@ module.exports = {
                     ]);
 
                     await interaction.reply({
-                        content: "Channel erfolgreich geöffnet.",
+                        embeds: [
+                            new EmbedBuilder()
+                                .setTitle("Channel")
+                                .setSubTitle("Geöffnet")
+                                .setDescription(
+                                    `➥ Dein Channel wurde erfolgreich geöffnet.\n` +
+                                    `↬ Dein Channel ist nun öffentlich und jeder kann ihn betreten.\n` +
+                                    `↬ Ausgenommen hiervon sind von dir gebannte User.`
+                                )
+                        ],
                         ephemeral: true
                     });
 
@@ -58,7 +63,15 @@ module.exports = {
                     ]);
 
                     await interaction.reply({
-                        content: "Channel erfolgreich geschlosen.",
+                        embeds: [
+                            new EmbedBuilder()
+                                .setTitle("Channel")
+                                .setSubTitle("Geschlossen")
+                                .setDescription(
+                                    `➥ Dein Channel wurde erfolgreich geschlossen.\n` +
+                                    `↬ Andere User können deinen Channel nicht mehr betreten.`
+                                )
+                        ],
                         ephemeral: true
                     });
 
@@ -99,11 +112,17 @@ module.exports = {
 
                     break;
                 case "kick":
-                    if (channel.members.length <= 1) {
+                    if (channel.members.size <= 1) {
                         await interaction.reply({
-                            content:
-                                `**${Emojis.get_emoji("wrong")} - Zu wenig Mitglieder.**\n` +
-                                `↬ Der Channel benötigt mindestens 2 Mitglieder um jemanden kicken zu können.`,
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle("Channel")
+                                    .setSubTitle("Fehler")
+                                    .setDescription(
+                                        `➥ Dein Channel hat zu wenig Mitglieder.\n` +
+                                        `↬ Der Channel benötigt mindestens 2 Mitglieder um jemanden kicken zu können.`
+                                    )
+                            ],
                             ephemeral: true
                         });
                     } else {
@@ -114,8 +133,12 @@ module.exports = {
                         await interaction.reply({
                             embeds: [
                                 new EmbedBuilder()
-                                    .setTitle("Channel - Kick")
-                                    .setDescription("Bitte wähle aus dem unteren Dropdown Menü den User welchen du kicken möchtest.")
+                                    .setTitle("Channel")
+                                    .setSubTitle("Kick")
+                                    .setDescription(
+                                        `➥ Bitte wähle aus dem unteren Dropdown Menü den User welchen du kicken möchtest.\n` +
+                                        `↬ Bitte beachte, es kommt keine Bestätigungsabfrage, sobald du einen User ausgewählt hast wird dieser unwiderruflich gekickt.`
+                                    )
                             ],
                             components: [
                                 new ActionRowBuilder()
@@ -127,25 +150,112 @@ module.exports = {
 
                     break;
                 case "ban":
+                    const userSelect = new UserSelectMenuBuilder()
+                        .setCustomId('channel_action_ban')
+                        .setPlaceholder('Wähle einen User ...')
+
+                    await interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setTitle("Channel")
+                                .setSubTitle("Ban")
+                                .setDescription(
+                                    `➥ Bitte wähle aus dem unteren Dropdown Menü den User welchen du bannen möchtest.\n` +
+                                    `↬ Bitte beachte, es kommt keine Bestätigungsabfrage, sobald du einen User ausgewählt hast wird dieser unwiderruflich gebannt.`
+                                )
+                        ],
+                        components: [
+                            new ActionRowBuilder()
+                                .addComponents(userSelect)
+                        ],
+                        ephemeral: true
+                    });
+
                     break;
                 case "unban":
+                    let select_options: StringSelectMenuOptionBuilder[] = [];
+                    const permissions = channel.permissionOverwrites.cache;
+
+                    for (const [key, value] of permissions) {
+                        // Check if we have the connect perm denied (which is I do when a user gets banned)
+                        // Check as well if the referenced id is not @everyone, since when the channel is locked this would also have the deny perm.
+                        if (value.deny.has(PermissionsBitField.Flags.Connect) && key != interaction.guild.id) {
+                            let guildMember = await interaction.guild.members.fetch(key)
+                                .catch((_: any) => guildMember = key)
+
+                            select_options.push(
+                                new StringSelectMenuOptionBuilder()
+                                    .setLabel(guildMember.displayName)
+                                    .setDescription(guildMember.user.username)
+                                    .setValue(String(key))
+                            )
+                        }
+                    }
+
+                    const user_select: StringSelectMenuBuilder = new StringSelectMenuBuilder()
+                        .setCustomId("channel_action_unban")
+                        .setPlaceholder("Wähle einen User ...")
+                        .addOptions(select_options);
+
+                    if (select_options.length <= 0) {
+                        return await interaction.reply({
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle("Channel")
+                                    .setSubTitle("Unban")
+                                    .setDescription(
+                                        `➥ Derzeit ist kein User gebannt.`
+                                    )
+                            ],
+                            ephemeral: true
+                        });
+                    }
+
+                    await interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setTitle("Channel")
+                                .setSubTitle("Unban")
+                                .setDescription(
+                                    `➥ Bitte wähle aus dem unteren Dropdown Menü den User welchen du entbannen möchtest.\n` +
+                                    `↬ Bitte beachte, es kommt keine Bestätigungsabfrage, sobald du einen User ausgewählt hast wird dieser unwiderruflich gebannt.\n` +
+                                    `↬ Bitte beachte, es werden nur maximal 25 User angezeigt.`
+                                )
+                        ],
+                        components: [
+                            new ActionRowBuilder()
+                                .addComponents(user_select)
+                        ],
+                        ephemeral: true
+                    });
+
                     break;
                 case "owner":
                     let owner = await ChannelManager.get_owner(channel);
 
                     if (owner) {
                         await interaction.reply({
-                            content:
-                                `**${Emojis.get_emoji("user")} - Channel Owner.**\n` +
-                                `↬ Der derzeitige Channel-Owner ist ${owner}`,
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle("Channel")
+                                    .setSubTitle("Channel Owner")
+                                    .setDescription(
+                                        `➥ Der derzeitige Channel-Owner ist ${owner}\n`
+                                    )
+                            ],
                             ephemeral: true
                         });
                     } else {
                         await interaction.reply({
-                            content:
-                                `**${Emojis.get_emoji("info")} - Kein Channel Owner.**\n` +
-                                `↬ Der Channel hat derzeitig keinen Channel Owner.` +
-                                `↬ Nutze die Claim Funktion um diesen Channel zu beanspruchen.`,
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle("Channel")
+                                    .setSubTitle("Kein Channel Owner")
+                                    .setDescription(
+                                        `➥ Der Channel hat derzeitig keinen Channel Owner.\n` +
+                                        `↬ Nutze die Claim Funktion um diesen Channel zu beanspruchen.\n`
+                                    )
+                            ],
                             ephemeral: true
                         });
                     }
@@ -156,32 +266,49 @@ module.exports = {
 
                     if (success) {
                         await interaction.reply({
-                            content:
-                                `**${Emojis.get_emoji("correct")} - Channel Geclaimed.**\n` +
-                                `↬ Du hast den Channel erfolgreich geclaimed.`,
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle("Channel")
+                                    .setSubTitle("Channel Geclaimed")
+                                    .setDescription(
+                                        `➥ Du hast den Channel erfolgreich geclaimed.`
+                                    )
+                            ],
                             ephemeral: true
                         });
                     } else {
                         await interaction.reply({
-                            content:
-                                `**${Emojis.get_emoji("wrong")} - Channel konnte nicht geclaimed werden.**\n` +
-                                `↬ ${error ? error : "Unbekannter Fehler."}`,
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle("Channel")
+                                    .setSubTitle("Fehler")
+                                    .setDescription(
+                                        `➥ Channel konnte nicht geclaimed werden.\n` +
+                                        `↬ ${error ? error : "Unbekannter Fehler."}`
+                                    )
+                            ],
                             ephemeral: true
                         });
                     }
 
                     break;
                 case "switch":
-                    if (channel.members.length <= 1) {
+                    if (channel.members.size <= 1) {
                         await interaction.reply({
-                            content:
-                                `**${Emojis.get_emoji("wrong")} - Zu wenig Mitglieder.**\n` +
-                                `↬ Der Channel benötigt mindestens 2 Mitglieder um den Channel Owner weitergeben zu können.`,
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle("Channel")
+                                    .setSubTitle("Fehler")
+                                    .setDescription(
+                                        `➥ Dein Channel hat zu wenig Mitglieder.\n` +
+                                        `↬ Der Channel benötigt mindestens 2 Mitglieder um jemanden Owner geben zu können.`
+                                    )
+                            ],
                             ephemeral: true
                         });
                     } else {
                         const userSelect = new UserSelectMenuBuilder()
-                            .setCustomId('channel_switch')
+                            .setCustomId('channel_action_switch')
                             .setPlaceholder('Wähle einen neuen Owner ...')
                             // So this seems useless since it is not working, I think discord does not support restricting the user selection.
                             // .setDefaultUsers(["406420078549270539"]); // ...channel.members.map((member: GuildMember) => { return member.id })
@@ -189,8 +316,12 @@ module.exports = {
                         await interaction.reply({
                             embeds: [
                                 new EmbedBuilder()
-                                    .setTitle("Channel - Owner weitergeben")
-                                    .setDescription("Bitte wähle aus dem unteren Dropdown Menü den neuen Channel-Owner.")
+                                    .setTitle("Channel")
+                                    .setSubTitle("Owner weitergeben")
+                                    .setDescription(
+                                        `➥ Bitte wähle aus dem unteren Dropdown Menü den neuen Channel-Owner.\n` +
+                                        `↬ Bitte beachte, es kommt keine Bestätigungsabfrage, sobald du einen User ausgewählt hast wird der Owner-Status weitergegeben.`
+                                    )
                             ],
                             components: [
                                 new ActionRowBuilder()
