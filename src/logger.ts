@@ -8,4 +8,3 @@ const stream = pretty({
 
 const logger = pino({ level: 'info' }, stream)
 export default logger;
-// module.exports = logger;
